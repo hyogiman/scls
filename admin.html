@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>운영 관리</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css" />
+<style>
+  :root{
+    --paper:#F3F2EE; --card:#FFFFFF; --ink:#1A1E2B; --muted:#767E90; --line:#E2E1DB;
+    --accent:#0E7C66; --accent-soft:#E6F1EE; --badge:#B8891C; --danger:#B4432B;
+    --sans:'Pretendard Variable',Pretendard,-apple-system,BlinkMacSystemFont,system-ui,'Malgun Gothic',sans-serif;
+    --mono:'IBM Plex Mono','SFMono-Regular',Consolas,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;display:flex;flex-direction:column;overflow:hidden;-webkit-font-smoothing:antialiased}
+  button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+  input,textarea,select{font-family:inherit;font-size:15px;color:inherit}
+  .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .eyebrow{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+  .btn{padding:12px 16px;border-radius:10px;background:var(--ink);color:#fff;font-size:14px;font-weight:600;transition:.15s;white-space:nowrap}
+  .btn:hover{opacity:.88}
+  .btn:disabled{opacity:.3;cursor:default}
+  .btn.primary{background:var(--accent)}
+  .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--muted);font-weight:500}
+  .btn.warn{background:var(--danger)}
+  .btn.wide{width:100%;margin-top:14px;padding:15px}
+  .btn.sm{padding:6px 11px;font-size:12.5px;font-weight:500;border-radius:8px}
+
+  /* ══ 잠금 ══ */
+  #lock{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:24px}
+  #lock.hide{display:none}
+  #lock .box{width:100%;max-width:340px;text-align:center}
+  #lock h1{font-size:22px;font-weight:700;letter-spacing:-.03em;margin:10px 0 6px}
+  #lock p{color:var(--muted);font-size:14px;margin-bottom:22px}
+  #lock input{width:100%;padding:15px;text-align:center;letter-spacing:.5em;background:var(--card);border:1px solid var(--line);border-radius:11px;outline:none;font-family:var(--mono);font-size:18px}
+  #lock input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+  #lock .err{color:var(--danger);font-size:13.5px;margin-top:12px;min-height:18px}
+
+  /* ══ 상단 · 모드 스위치 ══ */
+  #app{flex:1;display:none;flex-direction:column;min-height:0}
+  #app.on{display:flex}
+  .top{flex:0 0 auto;display:flex;align-items:center;gap:14px;padding:12px 20px;background:var(--card);border-bottom:1px solid var(--line)}
+  .top .t{flex:1;min-width:0}
+  .top .t .eyebrow{display:block;margin-bottom:3px}
+  .top .t strong{font-size:17px;font-weight:700;letter-spacing:-.02em;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .modes{display:flex;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:3px;gap:3px;flex:0 0 auto}
+  .modes button{padding:8px 15px;border-radius:7px;font-size:13.5px;font-weight:600;color:var(--muted);transition:.15s}
+  .modes button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(26,30,43,.1)}
+  .modes button .badge{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);margin-left:6px;vertical-align:middle;opacity:0}
+  .modes button .badge.on{opacity:1}
+
+  .view{flex:1;display:none;flex-direction:column;min-height:0}
+  .view.on{display:flex}
+
+  /* ══ 진행 중 ══ */
+  .stats{flex:0 0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border-bottom:1px solid var(--line)}
+  .stat{background:var(--card);padding:12px 18px}
+  .stat b{display:block;font-family:var(--mono);font-size:24px;font-weight:600;letter-spacing:-.01em}
+  .stat span{font-size:11.5px;color:var(--muted)}
+  .stat.a b{color:var(--accent)}
+  .stat.b b{color:var(--badge)}
+
+  .livebar{flex:0 0 auto;display:flex;align-items:center;gap:10px;padding:11px 20px;background:var(--card);border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .livebar .clock{font-family:var(--mono);font-size:13px;color:var(--muted);flex:1;min-width:120px}
+  .livebar .clock b{color:var(--ink);font-weight:600}
+
+  .tabs{flex:0 0 auto;display:flex;gap:2px;padding:0 14px;background:var(--card);border-bottom:1px solid var(--line);overflow-x:auto}
+  .tabs button{padding:12px 14px;font-size:14px;font-weight:500;color:var(--muted);border-bottom:2px solid transparent;white-space:nowrap}
+  .tabs button.on{color:var(--ink);font-weight:700;border-bottom-color:var(--accent)}
+
+  .pane{flex:1 1 auto;overflow-y:auto;padding:18px 20px;display:none}
+  .pane.on{display:block}
+  .inner{max-width:900px;margin:0 auto}
+
+  #idle{flex:1;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:34px;gap:16px}
+  #idle.on{display:flex}
+  #idle .big{font-size:19px;font-weight:600}
+  #idle .sub{color:var(--muted);font-size:14px;line-height:1.7;white-space:pre-line;max-width:340px}
+
+  /* ══ 공통 블록 ══ */
+  .block{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:18px 20px;margin-bottom:14px}
+  .block h3{font-size:14px;font-weight:700;margin-bottom:5px}
+  .block .desc{font-size:13px;color:var(--muted);line-height:1.65;margin-bottom:14px}
+  .block .desc:last-child{margin-bottom:0}
+  .inline{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+  .inline input,.inline select{flex:1;min-width:150px;padding:11px 13px;background:var(--paper);border:1px solid var(--line);border-radius:10px;outline:none}
+  .inline input:focus{border-color:var(--accent);background:var(--card)}
+  textarea.note{width:100%;min-height:92px;resize:vertical;padding:13px 14px;background:var(--paper);border:1px solid var(--line);border-radius:10px;outline:none;line-height:1.6}
+  textarea.note:focus{border-color:var(--accent);background:var(--card)}
+  .links{display:flex;gap:9px;flex-wrap:wrap}
+
+  /* ══ 과정 카드 ══ */
+  .crs{display:flex;align-items:center;gap:12px;padding:13px 15px;border:1px solid var(--line);border-radius:11px;background:var(--card);margin-bottom:8px;flex-wrap:wrap}
+  .crs.now{border-color:rgba(14,124,102,.45);background:var(--accent-soft)}
+  .crs .mark{width:8px;height:8px;border-radius:50%;background:#CFD2CC;flex:0 0 auto}
+  .crs.now .mark{background:var(--accent)}
+  .crs .info{flex:1;min-width:150px}
+  .crs .nm{font-weight:700;font-size:14.5px;letter-spacing:-.01em}
+  .crs .sub{font-size:12px;color:var(--muted);margin-top:3px}
+  .crs .num{font-family:var(--mono);font-size:12.5px;color:var(--muted);flex:0 0 auto;white-space:nowrap}
+  .crs .num b{color:var(--ink);font-weight:600}
+  .crs .ops{display:flex;gap:6px;flex:0 0 auto;flex-wrap:wrap}
+
+  /* ══ 기록 상세 ══ */
+  .backbar{flex:0 0 auto;display:flex;align-items:center;gap:12px;padding:11px 20px;background:var(--card);border-bottom:1px solid var(--line)}
+  .backbar .bk{font-size:13.5px;color:var(--accent);font-weight:600;flex:0 0 auto}
+  .backbar .ttl{min-width:0;flex:1}
+  .backbar .ttl strong{display:block;font-size:15.5px;font-weight:700;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .backbar .ttl span{font-size:12px;color:var(--muted)}
+
+  /* ══ 질문 ══ */
+  .filters{display:flex;gap:7px;margin-bottom:13px;flex-wrap:wrap}
+  .chip{padding:7px 13px;border:1px solid var(--line);border-radius:20px;font-size:13px;color:var(--muted);background:var(--card)}
+  .chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .qi{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--badge);border-radius:11px;padding:14px 16px;margin-bottom:9px}
+  .qi.done{border-left-color:var(--accent);opacity:.62}
+  .qi.hid{border-left-color:#C3C6C0;opacity:.5}
+  .qi .hd{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+  .qi .nm{font-weight:700;font-size:14.5px}
+  .qi .aff{font-size:12.5px;color:var(--muted)}
+  .qi .no{font-family:var(--mono);font-size:11px;color:#9AA1B0}
+  .qi time{margin-left:auto;font-family:var(--mono);font-size:11.5px;color:#9AA1B0}
+  .qi .bd{font-size:14.5px;line-height:1.65;white-space:pre-wrap;word-break:break-word;margin-bottom:11px}
+  .qi .ops{display:flex;gap:7px;flex-wrap:wrap}
+
+  /* ══ 출석부 ══ */
+  .tblwrap{background:var(--card);border:1px solid var(--line);border-radius:13px;overflow:hidden}
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th{background:var(--paper);text-align:left;padding:11px 12px;font-size:11.5px;font-weight:600;color:var(--muted);border-bottom:1px solid var(--line);white-space:nowrap}
+  td{padding:11px 12px;border-bottom:1px solid var(--line)}
+  tr:last-child td{border-bottom:none}
+  th.r,td.r{text-align:right}
+  td.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#CFD2CC;margin-right:7px;vertical-align:middle}
+  .dot.on{background:var(--accent)}
+  td .qn{font-family:var(--mono);font-weight:600}
+  td .qn.zero{color:#B9BDB6;font-weight:400}
+  .rank{font-family:var(--mono);color:var(--muted);font-size:12px}
+  .empty{text-align:center;color:var(--muted);font-size:13.5px;padding:44px 20px;line-height:1.7;white-space:pre-line}
+
+  .ntc{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:13px 15px;margin-bottom:9px;display:flex;gap:12px;align-items:flex-start}
+  .ntc .bd{flex:1;font-size:14px;line-height:1.6;white-space:pre-wrap;word-break:break-word}
+  .ntc time{font-family:var(--mono);font-size:11px;color:#9AA1B0;flex:0 0 auto}
+
+  /* ══ 모달 ══ */
+  .veil{position:fixed;inset:0;background:rgba(26,30,43,.45);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;padding:22px;z-index:50}
+  .veil.on{display:flex}
+  .sheet{background:var(--card);border-radius:16px;padding:24px 22px 20px;max-width:420px;width:100%}
+  .sheet h3{font-size:18px;font-weight:700;letter-spacing:-.02em;margin-bottom:9px}
+  .sheet .body{font-size:14.5px;line-height:1.7;white-space:pre-line;color:#333B4D}
+  .sheet .btns{display:flex;gap:9px;margin-top:20px}
+  .sheet .btns .btn{flex:1}
+  .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(12px);background:var(--ink);color:#fff;padding:12px 20px;border-radius:24px;font-size:13.5px;opacity:0;transition:.25s;pointer-events:none;z-index:60}
+  .toast.on{opacity:1;transform:translateX(-50%)}
+
+  @media (max-width:640px){ .stats{grid-template-columns:repeat(2,1fr)} .pane{padding:14px} }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<!-- ══ 잠금 ══ -->
+<div id="lock">
+  <div class="box">
+    <span class="eyebrow">Admin</span>
+    <h1>운영 관리</h1>
+    <p>비밀번호를 입력하세요.</p>
+    <input id="pw" type="password" inputmode="numeric" maxlength="12" autocomplete="off" />
+    <button class="btn primary wide" id="unlock">열기</button>
+    <div class="err" id="pwErr"></div>
+  </div>
+</div>
+
+<!-- ══ 본체 ══ -->
+<div id="app">
+  <div class="top">
+    <div class="t">
+      <span class="eyebrow">운영 관리</span>
+      <strong id="tPgm">—</strong>
+    </div>
+    <div class="modes">
+      <button id="mLive" class="on">진행 중<span class="badge" id="liveDot"></span></button>
+      <button id="mMng">관리</button>
+    </div>
+  </div>
+
+  <!-- ══════ 진행 중 모드 ══════ -->
+  <section class="view on" id="vLive">
+    <div class="stats" id="liveStats">
+      <div class="stat a"><b id="sOn">0</b><span>접속 중</span></div>
+      <div class="stat"><b id="sAll">0</b><span>출석 인원</span></div>
+      <div class="stat b"><b id="sQ">0</b><span>질문</span></div>
+      <div class="stat"><b id="sP">0</b><span>질문한 사람</span></div>
+    </div>
+    <div class="livebar" id="liveBar">
+      <span class="clock" id="elapsed">경과 —</span>
+      <button class="btn ghost sm" id="toggleOpen">질문 받기 끄기</button>
+      <button class="btn warn sm" id="endNow">과정 종료</button>
+    </div>
+    <div class="tabs" id="liveTabs">
+      <button class="on" data-p="lq">질문</button>
+      <button data-p="lr">출석</button>
+      <button data-p="ln">공지</button>
+    </div>
+
+    <div class="pane on" id="lq"><div class="inner">
+      <div class="filters">
+        <button class="chip on" data-lf="all">전체</button>
+        <button class="chip" data-lf="todo">답변 전</button>
+        <button class="chip" data-lf="done">답변함</button>
+        <button class="chip" data-lf="hidden">숨긴 것</button>
+      </div>
+      <div id="lqList"></div>
+    </div></div>
+
+    <div class="pane" id="lr"><div class="inner">
+      <div class="block" style="padding:13px 15px">
+        <div class="inline">
+          <select id="lSort" style="flex:0 0 auto;min-width:150px">
+            <option value="q">질문 많은 순</option>
+            <option value="join">입장 순</option>
+            <option value="name">이름 순</option>
+            <option value="dept">소속 순</option>
+          </select>
+          <button class="btn ghost" id="lCsv" style="flex:0 0 auto">출석부 내려받기</button>
+        </div>
+      </div>
+      <div class="tblwrap" id="lrTable"></div>
+    </div></div>
+
+    <div class="pane" id="ln"><div class="inner">
+      <div class="block">
+        <h3>공지 띄우기</h3>
+        <p class="desc">지금 참여 중인 참가자 화면에 팝업으로 뜹니다. 늦게 들어온 사람에게는 가장 최근 공지 하나가 보입니다.</p>
+        <textarea class="note" id="ntcIn" placeholder="예: 10분 뒤 조별 토의를 시작합니다." maxlength="500"></textarea>
+        <button class="btn primary wide" id="ntcSend">공지 띄우기</button>
+      </div>
+      <div id="ntcList"></div>
+    </div></div>
+
+    <div id="idle">
+      <div class="big">진행 중인 과정이 없습니다</div>
+      <div class="sub">관리 탭에서 과정을 골라 ‘진행’을 누르면
+강사 화면과 참가자 화면이 함께 켜집니다.</div>
+      <button class="btn primary" id="goMng">관리로 가기</button>
+    </div>
+  </section>
+
+  <!-- ══════ 관리 모드 ══════ -->
+  <section class="view" id="vMng">
+    <!-- 목록 -->
+    <div class="pane on" id="mList"><div class="inner">
+      <div class="block">
+        <h3>새 과정 등록</h3>
+        <p class="desc">미리 등록해 두고 시간이 되면 ‘진행’만 누르면 됩니다. 등록만으로는 아무 화면도 바뀌지 않습니다.</p>
+        <div class="inline">
+          <input id="crsName" placeholder="과정 이름 (예: 09:00 안전리더십 1조)" maxlength="60" style="flex:2 1 220px" />
+          <input id="crsWhen" placeholder="일시 메모 (예: 8/28 오전)" maxlength="30" style="flex:1 1 130px" />
+          <button class="btn" id="crsAdd" style="flex:0 0 auto">등록</button>
+        </div>
+      </div>
+
+      <div class="block">
+        <h3>등록한 과정</h3>
+        <p class="desc">‘기록’은 지난 과정의 질문·출석부를 보는 곳입니다. ‘진행’을 누르면 그 과정이 시작되고, 진행 중이던 과정의 참가자는 모두 퇴장합니다.</p>
+        <div id="crsList"></div>
+      </div>
+
+      <div class="block">
+        <h3>전체 기록</h3>
+        <p class="desc">모든 과정의 출석을 사번 기준으로 합쳐 봅니다. 여러 과정에 걸친 참여도를 볼 때 쓰세요.</p>
+        <button class="btn ghost" id="goAll">전체 과정 합산 보기</button>
+      </div>
+
+      <div class="block">
+        <h3>화면 열기</h3>
+        <p class="desc">강사 화면은 빔프로젝터에, 참가자 주소는 참가자에게 안내하세요.</p>
+        <div class="links">
+          <button class="btn ghost" id="openScreen">강사 화면 열기</button>
+          <button class="btn ghost" id="openUser">참가자 화면 열기</button>
+          <button class="btn ghost" id="copyUser">참가자 주소 복사</button>
+        </div>
+      </div>
+    </div></div>
+
+    <!-- 기록 상세 -->
+    <div class="pane" id="mDetail" style="padding:0;overflow:hidden;flex-direction:column">
+      <div class="backbar">
+        <button class="bk" id="backList">← 목록으로</button>
+        <div class="ttl"><strong id="dTitle">—</strong><span id="dSub">—</span></div>
+      </div>
+      <div class="stats">
+        <div class="stat"><b id="dAll">0</b><span id="dAllLbl">출석 인원</span></div>
+        <div class="stat b"><b id="dQ">0</b><span>질문</span></div>
+        <div class="stat"><b id="dP">0</b><span>질문한 사람</span></div>
+        <div class="stat"><b id="dC">0</b><span id="dCLbl">과정 수</span></div>
+      </div>
+      <div class="tabs" id="detTabs">
+        <button class="on" data-p="dq">질문</button>
+        <button data-p="dr">출석</button>
+      </div>
+      <div class="pane on" id="dq"><div class="inner">
+        <div class="filters">
+          <button class="chip on" data-df="all">전체</button>
+          <button class="chip" data-df="todo">답변 전</button>
+          <button class="chip" data-df="done">답변함</button>
+          <button class="chip" data-df="hidden">숨긴 것</button>
+        </div>
+        <div id="dqList"></div>
+      </div></div>
+      <div class="pane" id="dr"><div class="inner">
+        <div class="block" style="padding:13px 15px">
+          <div class="inline">
+            <select id="dSort" style="flex:0 0 auto;min-width:150px">
+              <option value="q">질문 많은 순</option>
+              <option value="join">입장 순</option>
+              <option value="name">이름 순</option>
+              <option value="dept">소속 순</option>
+            </select>
+            <button class="btn ghost" id="dCsv" style="flex:0 0 auto">출석부 내려받기</button>
+          </div>
+        </div>
+        <div class="tblwrap" id="drTable"></div>
+      </div></div>
+    </div>
+  </section>
+</div>
+
+<!-- 확인 모달 -->
+<div class="veil" id="askVeil">
+  <div class="sheet" role="dialog" aria-modal="true">
+    <h3 id="askT">확인</h3>
+    <div class="body" id="askB"></div>
+    <div class="btns">
+      <button class="btn ghost" id="askNo">취소</button>
+      <button class="btn" id="askYes">확인</button>
+    </div>
+  </div>
+</div>
+<!-- 이름 고치기 모달 -->
+<div class="veil" id="edVeil">
+  <div class="sheet" role="dialog" aria-modal="true">
+    <h3>과정 정보 고치기</h3>
+    <div class="inline" style="margin-top:14px">
+      <input id="edName" placeholder="과정 이름" maxlength="60" style="flex:2 1 200px" />
+      <input id="edWhen" placeholder="일시 메모" maxlength="30" style="flex:1 1 120px" />
+    </div>
+    <div class="btns">
+      <button class="btn ghost" id="edNo">취소</button>
+      <button class="btn primary" id="edYes">저장</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script type="module">
+/* ══════════════════════════════════════════════════════════════
+   ① Firebase 설정 — screen.html / index.html 과 똑같은 값을 넣으세요.
+      Realtime Database 를 us-central1 에 만들었다면 databaseURL 은
+      https://프로젝트이름-default-rtdb.firebaseio.com 형태입니다.
+      콘솔에 뜨는 주소를 그대로 복사하세요.
+   ② 관리자 비밀번호는 아래 ADMIN_PW 에서 바꿉니다.
+   ══════════════════════════════════════════════════════════════ */
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
+  projectId: "YOUR_PROJECT",
+  storageBucket: "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "000000000000",
+  appId: "1:000000000000:web:xxxxxxxxxxxx"
+};
+const ADMIN_PW = "1234";
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getDatabase, ref, set, update, push, remove, onValue,
+         query, orderByChild, limitToLast, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getDatabase(app);
+
+const $  = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const el = (t,c,x) => { const n=document.createElement(t); if(c)n.className=c; if(x!=null)n.textContent=x; return n; };
+const hhmm = ts => { if(!ts) return '—'; const d=new Date(ts); return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); };
+const full = ts => { if(!ts) return '—'; const d=new Date(ts); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${hhmm(ts)}`; };
+const ALL = '__ALL__';
+
+let cfg = {}, courses = {}, activeSid = null;
+let liveOff = [], liveSid = null, liveMsgs = {}, liveRoster = {}, liveOnline = {};
+let detOff  = [], detSid  = null, detMsgs  = {}, detRoster  = {}, allAttend = {};
+let lFilter = 'all', dFilter = 'all';
+
+/* ══ 모달 · 토스트 ══ */
+let toastT;
+const toast = m => { const t=$('#toast'); t.textContent=m; t.classList.add('on'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('on'),2200); };
+function ask(title, body, yes='확인', danger=false){
+  return new Promise(res => {
+    $('#askT').textContent=title; $('#askB').textContent=body;
+    const y=$('#askYes'); y.textContent=yes; y.className='btn'+(danger?' warn':'');
+    $('#askVeil').classList.add('on');
+    const done = v => { $('#askVeil').classList.remove('on'); y.onclick=null; $('#askNo').onclick=null; res(v); };
+    y.onclick=()=>done(true); $('#askNo').onclick=()=>done(false);
+  });
+}
+function edit(name, when){
+  return new Promise(res => {
+    $('#edName').value=name||''; $('#edWhen').value=when||'';
+    $('#edVeil').classList.add('on'); setTimeout(()=>$('#edName').focus(),50);
+    const done = v => { $('#edVeil').classList.remove('on'); $('#edYes').onclick=null; $('#edNo').onclick=null; res(v); };
+    $('#edYes').onclick = () => { const n=$('#edName').value.trim(); if(!n){toast('과정 이름을 입력하세요');return;} done({name:n, when:$('#edWhen').value.trim()}); };
+    $('#edNo').onclick = () => done(null);
+  });
+}
+
+/* ══ 잠금 ══ */
+function unlock(){
+  if ($('#pw').value !== ADMIN_PW){ $('#pwErr').textContent='비밀번호가 다릅니다.'; $('#pw').value=''; $('#pw').focus(); return; }
+  sessionStorage.setItem('qa_admin','1');
+  $('#lock').classList.add('hide'); $('#app').classList.add('on'); boot();
+}
+$('#unlock').onclick = unlock;
+$('#pw').addEventListener('keydown', e => { if(e.key==='Enter') unlock(); });
+
+/* ══ 모드 · 탭 ══ */
+function setMode(m){
+  $('#mLive').classList.toggle('on', m==='live');
+  $('#mMng').classList.toggle('on',  m==='mng');
+  $('#vLive').classList.toggle('on', m==='live');
+  $('#vMng').classList.toggle('on',  m==='mng');
+}
+$('#mLive').onclick = () => setMode('live');
+$('#mMng').onclick  = () => setMode('mng');
+$('#goMng').onclick = () => setMode('mng');
+
+const wireTabs = (bar) => $$(bar + ' button').forEach(b => b.onclick = () => {
+  $$(bar + ' button').forEach(x => x.classList.toggle('on', x===b));
+  const ids = $$(bar + ' button').map(x => x.dataset.p);
+  ids.forEach(id => $('#'+id).classList.toggle('on', id===b.dataset.p));
+});
+wireTabs('#liveTabs'); wireTabs('#detTabs');
+
+$$('.chip[data-lf]').forEach(c => c.onclick = () => {
+  $$('.chip[data-lf]').forEach(x=>x.classList.toggle('on', x===c));
+  lFilter = c.dataset.lf; drawLiveQ();
+});
+$$('.chip[data-df]').forEach(c => c.onclick = () => {
+  $$('.chip[data-df]').forEach(x=>x.classList.toggle('on', x===c));
+  dFilter = c.dataset.df; drawDetQ();
+});
+
+/* ══ 시작 ══ */
+function boot(){
+  signInAnonymously(auth).then(() => {
+    onValue(ref(db,'config'),   s => { cfg = s.val()||{};     applyConfig(); });
+    onValue(ref(db,'sessions'), s => { courses = s.val()||{}; applyConfig(); renderCourses(); });
+    setInterval(drawElapsed, 20000);
+  }).catch(e => toast('접속하지 못했습니다: ' + (e.code||e.message)));
+}
+if (sessionStorage.getItem('qa_admin') === '1'){
+  $('#lock').classList.add('hide'); $('#app').classList.add('on'); boot();
+}
+
+/* ══ 진행 상태 ══ */
+function applyConfig(){
+  activeSid = cfg.sessionId || null;
+  const c = activeSid ? (courses[activeSid]||{}) : {};
+  const nm = activeSid ? (c.name || cfg.programName || '이름 없는 과정')
+                       : ((cfg.lastEnded && cfg.lastEnded.name) ? `${cfg.lastEnded.name} — 끝남` : '진행 중인 과정 없음');
+  $('#tPgm').textContent = nm;
+  $('#liveDot').classList.toggle('on', !!activeSid);
+
+  const on = !!activeSid;
+  $('#liveStats').style.display = on ? 'grid' : 'none';
+  $('#liveBar').style.display   = on ? 'flex' : 'none';
+  $('#liveTabs').style.display  = on ? 'flex' : 'none';
+  ['lq','lr','ln'].forEach(id => $('#'+id).style.display = on ? '' : 'none');
+  $('#idle').classList.toggle('on', !on);
+
+  const open = cfg.chatOpen !== false;
+  $('#toggleOpen').textContent = open ? '질문 받기 끄기' : '질문 받기 켜기';
+  drawElapsed();
+  attachLive();
+  renderCourses();
+}
+
+function drawElapsed(){
+  if (!activeSid){ $('#elapsed').textContent = '경과 —'; return; }
+  const c = courses[activeSid]||{}, from = c.startedAt || c.createdAt;
+  const open = cfg.chatOpen !== false;
+  const mins = from ? Math.max(0, Math.floor((Date.now()-from)/60000)) : null;
+  const t = mins == null ? '—' : (mins < 60 ? `${mins}분` : `${Math.floor(mins/60)}시간 ${mins%60}분`);
+  $('#elapsed').innerHTML = '';
+  $('#elapsed').append(document.createTextNode('시작 ' + hhmm(from) + ' · 경과 '), el('b',null,t),
+                       document.createTextNode(open ? '' : ' · 질문 받기 멈춤'));
+}
+
+/* ══ 진행 중 리스너 ══ */
+function attachLive(){
+  if (liveSid === activeSid) return;
+  liveOff.forEach(f=>f()); liveOff=[];
+  liveSid = activeSid; liveMsgs={}; liveRoster={}; liveOnline={};
+  drawLiveQ(); drawLiveRoster(); drawLiveStats(); drawNotices({});
+  if (!liveSid) return;
+  liveOff.push(onValue(query(ref(db,`msg/${liveSid}`), orderByChild('ts'), limitToLast(500)), s => { liveMsgs=s.val()||{}; drawLiveQ(); drawLiveStats(); }));
+  liveOff.push(onValue(ref(db,`attend/${liveSid}`),   s => { liveRoster=s.val()||{}; drawLiveRoster(); drawLiveStats(); }));
+  liveOff.push(onValue(ref(db,`presence/${liveSid}`), s => { liveOnline=s.val()||{}; drawLiveRoster(); drawLiveStats(); }));
+  liveOff.push(onValue(query(ref(db,`notice/${liveSid}`), orderByChild('ts'), limitToLast(20)), s => drawNotices(s.val()||{})));
+}
+
+function drawLiveStats(){
+  const list = Object.values(liveMsgs).filter(m=>!m.hide);
+  $('#sQ').textContent   = String(list.length);
+  $('#sAll').textContent = String(Object.keys(liveRoster).length);
+  $('#sOn').textContent  = String(Object.keys(liveOnline).length);
+  $('#sP').textContent   = String(new Set(list.map(m=>m.empNo)).size);
+}
+
+/* ══ 질문 렌더 (진행 중 · 기록 공용) ══ */
+function renderQ(box, data, sid, filt, emptyMsg){
+  box.innerHTML = '';
+  if (!sid){ box.append(el('div','empty', emptyMsg)); return; }
+  let items = Object.entries(data).sort((a,b)=>(b[1].ts||0)-(a[1].ts||0)).filter(([,m]) =>
+    filt==='all'  ? !m.hide :
+    filt==='todo' ? (!m.hide && !m.done) :
+    filt==='done' ? (!m.hide && m.done) : !!m.hide);
+  if (!items.length){ box.append(el('div','empty','해당하는 질문이 없습니다.')); return; }
+
+  for (const [key,m] of items){
+    const n = el('article','qi' + (m.hide?' hid':m.done?' done':''));
+    const hd = el('div','hd');
+    hd.append(el('span','nm', m.name||'이름 없음'),
+              el('span','aff', [m.position,m.dept].filter(Boolean).join(' · ')),
+              el('span','no', m.empNo||''),
+              el('time', null, hhmm(m.ts)));
+    n.append(hd, el('div','bd', m.text||''));
+    const ops = el('div','ops');
+    const bDone = el('button','btn sm ' + (m.done?'ghost':'primary'), m.done?'답변 취소':'답변함');
+    bDone.onclick = () => update(ref(db,`msg/${sid}/${key}`), { done: !m.done });
+    const bHide = el('button','btn sm ghost', m.hide?'다시 보이기':'숨기기');
+    bHide.onclick = () => update(ref(db,`msg/${sid}/${key}`), { hide: !m.hide });
+    const bDel = el('button','btn sm ghost','삭제'); bDel.style.color='var(--danger)';
+    bDel.onclick = async () => {
+      if (!await ask('질문을 지울까요?','지운 질문은 되살릴 수 없습니다.\n잠시 가려두려면 ‘숨기기’를 쓰세요.','삭제',true)) return;
+      await remove(ref(db,`msg/${sid}/${key}`)); toast('질문을 지웠습니다');
+    };
+    ops.append(bDone,bHide,bDel); n.append(ops); box.append(n);
+  }
+}
+const drawLiveQ = () => renderQ($('#lqList'), liveMsgs, liveSid, lFilter, '진행 중인 과정이 없습니다.');
+const drawDetQ  = () => {
+  if (detSid === ALL){ $('#dqList').innerHTML=''; $('#dqList').append(el('div','empty','합산 보기에서는 질문 목록을 보여주지 않습니다.\n목록에서 과정을 하나 고르세요.')); return; }
+  renderQ($('#dqList'), detMsgs, detSid, dFilter, '과정을 고르세요.');
+};
+
+/* ══ 출석부 렌더 (공용) ══ */
+function rosterRows(map, online){
+  return Object.entries(map).map(([no,r]) => ({
+    no, name:r.name||'', position:r.position||'', dept:r.dept||'',
+    joinedAt:r.joinedAt||0, q:r.qCount||0, on:!!(online||{})[no], courses:1 }));
+}
+function aggregate(){
+  const m = new Map();
+  for (const [id, people] of Object.entries(allAttend)){
+    if (!courses[id]) continue;
+    for (const [no, r] of Object.entries(people||{})){
+      const cur = m.get(no) || { no, name:'', position:'', dept:'', courses:0, q:0, joinedAt:0, on:false };
+      if (r.name){ cur.name=r.name; cur.position=r.position||''; cur.dept=r.dept||''; }
+      cur.courses += 1; cur.q += (r.qCount||0);
+      cur.joinedAt = Math.max(cur.joinedAt, r.joinedAt||0);
+      m.set(no, cur);
+    }
+  }
+  return [...m.values()];
+}
+function renderRoster(wrap, rows, by, agg, emptyMsg){
+  wrap.innerHTML = '';
+  if (!rows.length){ wrap.append(el('div','empty', emptyMsg)); return; }
+  rows.sort((a,b) =>
+    by==='q'    ? (b.q-a.q) || a.name.localeCompare(b.name,'ko') :
+    by==='join' ? (a.joinedAt-b.joinedAt) :
+    by==='dept' ? a.dept.localeCompare(b.dept,'ko') || a.name.localeCompare(b.name,'ko')
+                : a.name.localeCompare(b.name,'ko'));
+  const t = el('table'), thead = el('thead'), tr = el('tr');
+  (agg ? ['','성명','직위','소속','사번','참석 과정','질문'] : ['','성명','직위','소속','사번','입장','질문'])
+    .forEach((h,i)=>{ const th=el('th', i>=5?'r':null, h); if(i===0) th.style.width='34px'; tr.append(th); });
+  thead.append(tr); t.append(thead);
+  const tb = el('tbody');
+  rows.forEach((r,i) => {
+    const row = el('tr');
+    row.append(el('td','rank', String(i+1)));
+    const nameTd = el('td'); nameTd.style.fontWeight='600';
+    nameTd.append(el('span','dot'+(r.on?' on':'')), document.createTextNode(r.name));
+    row.append(nameTd, el('td',null,r.position||'—'), el('td',null,r.dept||'—'), el('td','mono',r.no));
+    row.append(el('td', agg?'r mono':'mono', agg ? String(r.courses) : hhmm(r.joinedAt)));
+    const q = el('td','r'); q.append(el('span','qn'+(r.q?'':' zero'), String(r.q)));
+    row.append(q); tb.append(row);
+  });
+  t.append(tb); wrap.append(t);
+}
+const drawLiveRoster = () => renderRoster($('#lrTable'), rosterRows(liveRoster, liveOnline), $('#lSort').value, false, '아직 입장한 참가자가 없습니다.');
+const drawDetRoster  = () => {
+  const agg = detSid === ALL;
+  renderRoster($('#drTable'), agg ? aggregate() : rosterRows(detRoster, null), $('#dSort').value, agg, '출석 기록이 없습니다.');
+};
+$('#lSort').onchange = drawLiveRoster;
+$('#dSort').onchange = drawDetRoster;
+
+/* ══ CSV ══ */
+function csv(rows, agg, label){
+  if (!rows.length){ toast('내려받을 출석 기록이 없습니다'); return; }
+  rows.sort((a,b)=>b.q-a.q);
+  const esc = v => '"' + String(v==null?'':v).replace(/"/g,'""') + '"';
+  const head = agg ? ['사번','성명','직위','소속','참석 과정 수','질문 수'] : ['사번','성명','직위','소속','입장시각','질문 수'];
+  const lines = [head.map(esc).join(',')];
+  rows.forEach(r => lines.push([r.no, r.name, r.position, r.dept, agg ? r.courses : full(r.joinedAt), r.q].map(esc).join(',')));
+  const blob = new Blob(['\uFEFF' + lines.join('\r\n')], { type:'text/csv;charset=utf-8' });
+  const a = el('a'); a.href = URL.createObjectURL(blob);
+  const d = new Date();
+  a.download = `출석부_${String(label).replace(/[\\/:*?"<>|]/g,'')}_${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}.csv`;
+  a.click(); URL.revokeObjectURL(a.href);
+  toast('출석부를 내려받았습니다');
+}
+$('#lCsv').onclick = () => csv(rosterRows(liveRoster,null), false, (courses[liveSid]||{}).name || '과정');
+$('#dCsv').onclick = () => detSid === ALL ? csv(aggregate(), true, '전체합산')
+                                          : csv(rosterRows(detRoster,null), false, (courses[detSid]||{}).name || '과정');
+
+/* ══ 공지 ══ */
+$('#ntcSend').onclick = async () => {
+  const body = $('#ntcIn').value.trim();
+  if (!body){ toast('공지 내용을 입력하세요'); return; }
+  if (!activeSid){ toast('진행 중인 과정이 없습니다'); return; }
+  await push(ref(db,`notice/${activeSid}`), { text: body, ts: serverTimestamp() });
+  $('#ntcIn').value=''; toast('공지를 띄웠습니다');
+};
+function drawNotices(obj){
+  const box = $('#ntcList'); box.innerHTML='';
+  const items = Object.entries(obj).sort((a,b)=>(b[1].ts||0)-(a[1].ts||0));
+  if (!items.length){ box.append(el('div','empty','아직 띄운 공지가 없습니다.')); return; }
+  for (const [key,n] of items){
+    const row = el('div','ntc');
+    row.append(el('div','bd', n.text||''), el('time', null, hhmm(n.ts)));
+    const del = el('button','btn sm ghost','지움');
+    del.onclick = () => remove(ref(db,`notice/${liveSid}/${key}`));
+    row.append(del); box.append(row);
+  }
+}
+
+/* ══ 과정 목록 ══ */
+function renderCourses(){
+  const box = $('#crsList'); box.innerHTML='';
+  // 진행 중 → 대기(등록 순 = 하루 시간표 순서) → 끝남(최근 순)
+  const rank = ([id,c]) => id === activeSid ? 0 : (c.closedAt ? 2 : 1);
+  const list = Object.entries(courses).sort((a,b) => {
+    const ra = rank(a), rb = rank(b);
+    if (ra !== rb) return ra - rb;
+    if (ra === 2) return (b[1].closedAt||0) - (a[1].closedAt||0);
+    return (a[1].createdAt||0) - (b[1].createdAt||0);
+  });
+  if (!list.length){ box.append(el('div','empty','아직 등록한 과정이 없습니다.\n위에서 과정을 등록해 주세요.')); return; }
+  for (const [id,c] of list){
+    const now = id === activeSid;
+    const row = el('div','crs' + (now?' now':''));
+    row.append(el('span','mark'));
+    const info = el('div','info');
+    info.append(el('div','nm', c.name || '이름 없음'));
+    info.append(el('div','sub', [c.when, now ? '진행 중' : (c.closedAt ? '끝남 ' + hhmm(c.closedAt) : '대기')].filter(Boolean).join(' · ')));
+    row.append(info);
+    const num = el('div','num');
+    num.append(document.createTextNode('출석 '), el('b',null,String(c.pplTotal||0)),
+               document.createTextNode(' · 질문 '), el('b',null,String(c.qTotal||0)));
+    row.append(num);
+
+    const ops = el('div','ops');
+    const bRec = el('button','btn sm ghost','기록');
+    bRec.onclick = () => openDetail(id);
+    const bRun = el('button','btn sm ' + (now?'ghost':'primary'), now ? '진행 중' : '진행');
+    bRun.disabled = now;
+    bRun.onclick = () => startCourse(id, c);
+    const bEd = el('button','btn sm ghost','수정');
+    bEd.onclick = async () => {
+      const r = await edit(c.name, c.when); if (!r) return;
+      await update(ref(db,`sessions/${id}`), { name:r.name, when:r.when });
+      if (id === activeSid) await update(ref(db,'config'), { programName:r.name });
+      toast('과정 정보를 고쳤습니다');
+    };
+    const bDel = el('button','btn sm ghost','삭제'); bDel.style.color='var(--danger)';
+    bDel.onclick = () => dropCourse(id, c);
+    ops.append(bRec,bRun,bEd,bDel); row.append(ops); box.append(row);
+  }
+}
+
+$('#crsAdd').onclick = async () => {
+  const nm = $('#crsName').value.trim();
+  if (!nm){ toast('과정 이름을 입력하세요'); return; }
+  const d = new Date();
+  const id = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}-${String(d.getHours()).padStart(2,'0')}${String(d.getMinutes()).padStart(2,'0')}${String(d.getSeconds()).padStart(2,'0')}`;
+  await set(ref(db,`sessions/${id}`), { name:nm, when:$('#crsWhen').value.trim(), createdAt: serverTimestamp(), qTotal:0, pplTotal:0 });
+  $('#crsName').value=''; $('#crsWhen').value='';
+  toast('과정을 등록했습니다');
+};
+
+/* 과정 종료 — 참가자 전원 퇴장 */
+async function closeActive(){
+  if (!activeSid) return {};
+  const prev = courses[activeSid] || {};
+  await update(ref(db,`sessions/${activeSid}`), { closedAt: serverTimestamp() });
+  await remove(ref(db,`presence/${activeSid}`));
+  return { name: prev.name || '', at: Date.now(), ppl: prev.pplTotal || 0, q: prev.qTotal || 0 };
+}
+
+$('#endNow').onclick = async () => {
+  const c = courses[activeSid] || {};
+  const ok = await ask('과정을 끝낼까요?',
+    `〈${c.name||''}〉을 종료합니다.\n\n· 참가자는 모두 퇴장하고 “수고하셨습니다” 화면을 봅니다\n· 강사 화면은 종료 안내로 바뀝니다\n· 질문·출석 기록은 그대로 남습니다`, '종료');
+  if (!ok) return;
+  const lastEnded = await closeActive();
+  await update(ref(db,'config'), { sessionId: null, lastEnded });
+  toast('과정을 종료했습니다');
+};
+
+async function startCourse(id, c){
+  const prevName = activeSid ? (courses[activeSid]||{}).name : null;
+  const body = prevName
+    ? `〈${c.name}〉을 진행합니다.\n\n진행 중인 〈${prevName}〉은 종료되고, 그 과정 참가자는 모두 퇴장합니다.`
+    : `〈${c.name}〉을 진행합니다.\n강사 화면과 참가자 화면이 이 과정에 연결됩니다.`;
+  if (!await ask('이 과정을 진행할까요?', body, '진행')) return;
+
+  const up = { programName: c.name, sessionId: id, chatOpen: true };
+  if (activeSid && activeSid !== id) up.lastEnded = await closeActive();
+  const su = { closedAt: null };
+  if (!c.startedAt) su.startedAt = serverTimestamp();
+  await update(ref(db,`sessions/${id}`), su);
+  await update(ref(db,'config'), up);
+  setMode('live');
+  toast('진행을 시작했습니다');
+}
+
+async function dropCourse(id, c){
+  if (!await ask('과정을 지울까요?', `〈${c.name}〉의 질문·출석 기록이 모두 사라집니다.\n되살릴 수 없습니다.`, '삭제', true)) return;
+  if (id === activeSid) await update(ref(db,'config'), { sessionId: null, lastEnded: null });
+  await Promise.all(['msg','attend','presence','notice'].map(k => remove(ref(db,`${k}/${id}`))));
+  await remove(ref(db,`sessions/${id}`));
+  if (detSid === id) backToList();
+  toast('과정을 지웠습니다');
+}
+
+$('#toggleOpen').onclick = async () => {
+  const open = cfg.chatOpen !== false;
+  await update(ref(db,'config'), { chatOpen: !open });
+  toast(open ? '질문 받기를 멈췄습니다' : '질문 받기를 켰습니다');
+};
+
+/* ══ 기록 상세 ══ */
+function showDetail(on){
+  $('#mList').classList.toggle('on', !on);
+  $('#mDetail').classList.toggle('on', on);
+  $('#mDetail').style.display = on ? 'flex' : 'none';
+}
+function backToList(){
+  detOff.forEach(f=>f()); detOff=[]; detSid=null; detMsgs={}; detRoster={}; allAttend={};
+  showDetail(false);
+}
+$('#backList').onclick = backToList;
+
+function openDetail(id){
+  detOff.forEach(f=>f()); detOff=[];
+  detSid = id; detMsgs={}; detRoster={}; allAttend={};
+  const agg = id === ALL, c = courses[id] || {};
+  $('#dTitle').textContent = agg ? '전체 과정 합산' : (c.name || '이름 없음');
+  $('#dSub').textContent   = agg ? '모든 과정의 출석을 사번 기준으로 합쳤습니다'
+    : [c.when, c.startedAt ? full(c.startedAt) : null, id === activeSid ? '진행 중' : (c.closedAt ? '끝남' : '대기')].filter(Boolean).join(' · ');
+  $('#dCLbl').textContent  = agg ? '과정 수' : '누적 질문';
+  $('#dAllLbl').textContent= agg ? '참여자(중복 제외)' : '출석 인원';
+  $('#detTabs').style.display = agg ? 'none' : 'flex';
+  if (agg){ $('#dq').classList.remove('on'); $('#dr').classList.add('on'); }
+  else { $$('#detTabs button').forEach((b,i)=>b.classList.toggle('on', i===0)); $('#dq').classList.add('on'); $('#dr').classList.remove('on'); }
+  showDetail(true); setMode('mng');
+  drawDetQ(); drawDetRoster(); drawDetStats();
+
+  if (agg){
+    detOff.push(onValue(ref(db,'attend'), s => { allAttend = s.val()||{}; drawDetRoster(); drawDetStats(); }));
+    return;
+  }
+  detOff.push(onValue(query(ref(db,`msg/${id}`), orderByChild('ts'), limitToLast(500)), s => { detMsgs=s.val()||{}; drawDetQ(); drawDetStats(); }));
+  detOff.push(onValue(ref(db,`attend/${id}`), s => { detRoster=s.val()||{}; drawDetRoster(); drawDetStats(); }));
+}
+$('#goAll').onclick = () => openDetail(ALL);
+
+function drawDetStats(){
+  if (detSid === ALL){
+    const rows = aggregate();
+    $('#dAll').textContent = String(rows.length);
+    $('#dQ').textContent   = String(rows.reduce((a,r)=>a+r.q,0));
+    $('#dP').textContent   = String(rows.filter(r=>r.q>0).length);
+    $('#dC').textContent   = String(Object.keys(courses).length);
+    return;
+  }
+  const list = Object.values(detMsgs).filter(m=>!m.hide);
+  $('#dAll').textContent = String(Object.keys(detRoster).length);
+  $('#dQ').textContent   = String(list.length);
+  $('#dP').textContent   = String(new Set(list.map(m=>m.empNo)).size);
+  $('#dC').textContent   = String((courses[detSid]||{}).qTotal || 0);
+}
+
+/* ══ 화면 열기 ══ */
+const base = location.href.replace(/[^/]*$/,'');
+$('#openScreen').onclick = () => window.open(base + 'screen.html','_blank');
+$('#openUser').onclick   = () => window.open(base + 'index.html','_blank');
+$('#copyUser').onclick   = async () => {
+  try{ await navigator.clipboard.writeText(base + 'index.html'); toast('참가자 주소를 복사했습니다'); }
+  catch{ toast(base + 'index.html'); }
+};
+</script>
+</body>
+</html>
