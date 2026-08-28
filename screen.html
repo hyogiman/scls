@@ -61,7 +61,7 @@
     color:var(--muted);font-weight:600;letter-spacing:-.01em}
   .cell .vl{font-family:var(--mono);font-weight:600;font-variant-numeric:tabular-nums;
     color:var(--ink);margin-left:12px}
-  .cell.q .vl{color:var(--badge)}
+  .cell.qmeter .vl{color:var(--badge)}
 
   .zoom{display:flex;gap:6px;margin-left:6px}
   .zoom button{
@@ -221,7 +221,7 @@
   <div class="meters">
     <div class="gauge">
       <div class="cell"><span class="in">출석<b class="vl" id="mAll">0</b></span></div>
-      <div class="cell q"><span class="in">질문<b class="vl" id="mQ">0</b></span></div>
+      <div class="cell qmeter"><span class="in">질문<b class="vl" id="mQ">0</b></span></div>
     </div>
     <div class="zoom">
       <button id="zOut" title="글자 작게" aria-label="글자 작게">A−</button>
