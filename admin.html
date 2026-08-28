@@ -479,6 +479,10 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) wake
 window.addEventListener('pageshow', e => { if (e.persisted) forceReconnect(); else wake(); });
 window.addEventListener('focus', wake);
 window.addEventListener('online', forceReconnect);
+/* 창을 닫거나 페이지를 떠날 때 소켓을 직접 닫는다.
+   그냥 닫으면 종료 신호가 안 가는 경우가 있어 서버가 타임아웃까지 자리를 붙잡고 있다. */
+window.addEventListener('pagehide', () => { try { goOffline(db); } catch {} });
+
 
 const $  = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];

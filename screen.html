@@ -276,6 +276,19 @@ const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db   = getDatabase(app);
 
+/* ══ 연결 관리 ══
+   빔 PC가 절전에서 깨어나면 소켓이 죽어 있을 수 있는데, RTDB는 그 상태에서 조용히 멈춘다.
+   그래서 상태를 눈에 보이게 하고, 돌아왔을 때 직접 다시 붙인다. */
+let __net = false, __wakeT = null;
+const forceReconnect = () => { try { goOffline(db); goOnline(db); } catch {} };
+const wake = () => { clearTimeout(__wakeT); __wakeT = setTimeout(() => { if (!__net) forceReconnect(); }, 1200); };
+document.addEventListener('visibilitychange', () => { if (!document.hidden) wake(); });
+window.addEventListener('pageshow', e => { if (e.persisted) forceReconnect(); else wake(); });
+window.addEventListener('focus', wake);
+window.addEventListener('online', forceReconnect);
+// 창을 닫을 때 소켓을 직접 닫는다 — 종료 신호가 안 가면 서버가 타임아웃까지 자리를 붙잡는다
+window.addEventListener('pagehide', () => { try { goOffline(db); } catch {} });
+
 const $ = s => document.querySelector(s);
 const board = $('#board'), scroller = $('#scroller'), note = $('#note');
 const cards = new Map();          // 메시지키 → DOM 요소
