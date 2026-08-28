@@ -51,14 +51,19 @@
   .meters{display:flex;align-items:center;gap:12px;flex:0 0 auto}
   .gauge{display:flex;align-items:stretch;flex:0 0 auto;
     background:#1B2029;border:1px solid #2B3242;border-radius:10px;overflow:hidden}
-  .cell{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;
-    height:46px;padding:0 17px;min-width:116px;box-sizing:border-box}
+  /* 바깥 칸은 세로 가운데만 잡고, 안쪽 줄에서 라벨과 숫자의 «기준선»을 맞춘다.
+     한 단계에서 둘 다 하려고 하면 13px 한글과 22px 숫자가 서로 다른 높이에 앉는다. */
+  .cell{flex:0 0 auto;box-sizing:border-box;display:flex;align-items:center;
+    height:48px;padding:0 16px;min-width:120px}
   .cell + .cell{border-left:1px solid #2B3242}
-  .cell span{flex:0 0 auto;font-size:12.5px;font-weight:600;color:var(--muted);letter-spacing:.02em}
-  .cell b{flex:0 0 auto;font-family:var(--mono);font-size:22px;font-weight:600;line-height:1;
-    font-variant-numeric:tabular-nums}
+  .cell .in{display:flex;align-items:baseline;justify-content:space-between;
+    gap:12px;width:100%;line-height:1}
+  .cell .lb{flex:0 0 auto;font-size:13px;font-weight:600;color:var(--muted);
+    letter-spacing:.02em;line-height:1}
+  .cell .vl{flex:0 0 auto;font-family:var(--mono);font-size:22px;font-weight:600;
+    line-height:1;font-variant-numeric:tabular-nums;min-width:2.4ch;text-align:right}
   .cell.q{background:#231F16}
-  .cell.q b{color:var(--badge)}
+  .cell.q .vl{color:var(--badge)}
 
   .zoom{display:flex;gap:6px;margin-left:6px}
   .zoom button{
@@ -217,8 +222,8 @@
   </div>
   <div class="meters">
     <div class="gauge">
-      <div class="cell"><span>출석</span><b id="mAll">0</b></div>
-      <div class="cell q"><span>질문</span><b id="mQ">0</b></div>
+      <div class="cell"><div class="in"><span class="lb">출석</span><b class="vl" id="mAll">0</b></div></div>
+      <div class="cell q"><div class="in"><span class="lb">질문</span><b class="vl" id="mQ">0</b></div></div>
     </div>
     <div class="zoom">
       <button id="zOut" title="글자 작게" aria-label="글자 작게">A−</button>
