@@ -97,6 +97,15 @@
   #note .fin span{font-size:12px;color:#5B6578}
   .wrap{position:relative;flex:1 1 auto;min-height:0;display:flex;flex-direction:column}
 
+  /* 새 질문 알림 */
+  #flash{
+    position:fixed;top:0;left:50%;transform:translateX(-50%) translateY(-140%);
+    background:var(--badge);color:#20242E;font-weight:700;font-size:17px;letter-spacing:-.01em;
+    padding:13px 30px;border-radius:0 0 14px 14px;box-shadow:0 12px 34px -10px rgba(0,0,0,.55);
+    transition:transform .34s cubic-bezier(.2,.85,.3,1);z-index:40;white-space:nowrap;
+  }
+  #flash.on{transform:translateX(-50%) translateY(0)}
+
   @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -111,7 +120,6 @@
     </div>
   </div>
   <div class="meters">
-    <div class="meter"><b id="mOn">0</b><span>접속 중</span></div>
     <div class="meter"><b id="mAll">0</b><span>출석</span></div>
     <div class="meter q"><b id="mQ">0</b><span>질문</span></div>
     <div class="zoom">
@@ -120,6 +128,8 @@
     </div>
   </div>
 </header>
+
+<div id="flash">질문이 등록되었습니다</div>
 
 <div class="wrap">
   <main id="scroller"><div id="board"></div></main>
@@ -130,11 +140,6 @@
 </div>
 
 <script type="module">
-/* ══════════════════════════════════════════════════════════════
-   ① Firebase 설정 — 아래 값을 본인 프로젝트 값으로 바꾸세요.
-      (Firebase 콘솔 → 프로젝트 설정 → 내 앱 → 웹 앱 SDK 설정)
-      databaseURL 은 Realtime Database 화면 상단에 나오는 주소입니다.
-   ══════════════════════════════════════════════════════════════ */
 const firebaseConfig = {
   apiKey: "AIzaSyAQpfOww8oxF3mYN_vRiRFYmKIdVf0uXU4",
   authDomain: "studyclass-a03b4.firebaseapp.com",
@@ -159,6 +164,7 @@ const board = $('#board'), scroller = $('#scroller'), note = $('#note');
 const cards = new Map();          // 메시지키 → DOM 요소
 const syncCount = () => document.querySelector('#mQ').textContent = String(cards.size);
 let sid, attached = null, offs = [];   // 현재 세션 / 실제로 리스너를 건 세션
+let clearAt = 0, primeUntil = 0;       // 화면 정리 기준 시각 / 첫 로딩 알림 억제
 
 /* ── 글자 크기 ── */
 let qs = parseFloat(localStorage.getItem('qa_zoom') || '1');
@@ -186,15 +192,16 @@ const hideNote = () => note.classList.remove('show');
 
 function paint(node, m){
   node.classList.toggle('done', !!m.done);
-  node.querySelector('.nm').textContent  = m.name || '이름 없음';
-  node.querySelector('.aff').textContent = [m.position, m.dept].filter(Boolean).join(' · ');
+  node.querySelector('.nm').textContent  = m.anon ? '익명' : (m.name || '이름 없음');
+  node.querySelector('.aff').textContent = m.anon ? '' : [m.position, m.dept].filter(Boolean).join(' · ');
   node.querySelector('time').textContent = hhmm(m.ts);
   node.querySelector('p').textContent    = m.text || '';
 }
 
 function addCard(key, m){
-  if (m.hide) return;
+  if (m.hide || (m.ts || 0) <= clearAt) return;
   const node = el('article','q');
+  node.dataset.ts = m.ts || 0;
   const tag  = el('div','tag');
   tag.append(el('span','nm'), el('span','aff'), el('time'));
   node.append(tag, el('p'));
@@ -204,7 +211,26 @@ function addCard(key, m){
   node.classList.add('fresh');
   setTimeout(() => node.classList.remove('fresh'), 9000);
   syncCount(); hideNote();
+  if (Date.now() > primeUntil) flash();
   try { scroller.scrollTo({ top: 0, behavior: 'smooth' }); } catch { scroller.scrollTop = 0; }
+}
+
+let flashT;
+function flash(){
+  const f = $('#flash');
+  f.classList.add('on');
+  clearTimeout(flashT);
+  flashT = setTimeout(() => f.classList.remove('on'), 2400);
+}
+
+/* 관리자가 '질문 화면 정리'를 누르면 그 시각 이전 질문을 화면에서 내린다 (기록은 그대로) */
+function applyClear(at){
+  clearAt = at || 0;
+  for (const [key, node] of [...cards]){
+    if ((+node.dataset.ts || 0) <= clearAt){ node.remove(); cards.delete(key); }
+  }
+  syncCount();
+  if (!cards.size) showNote('질문을 기다리는 중입니다','참가자가 질문을 보내면 이 화면에 바로 올라옵니다.');
 }
 
 function dropCard(key){
@@ -216,7 +242,7 @@ function dropCard(key){
 function clearAll(){
   offs.forEach(f => f()); offs = [];
   board.innerHTML = ''; cards.clear();
-  $('#mOn').textContent = '0'; $('#mAll').textContent = '0'; $('#mQ').textContent = '0';
+  $('#mAll').textContent = '0'; $('#mQ').textContent = '0';
 }
 
 /* ── 세션 붙이기 ── */
@@ -235,7 +261,7 @@ function attach(newSid, ended){
     return;
   }
   if (attached === sid) return;
-  attached = sid;
+  attached = sid; clearAt = 0; primeUntil = Date.now() + 2000;   // 첫 로딩 때는 알림 억제
   $('#live').classList.add('on');
   showNote('질문을 기다리는 중입니다','참가자가 질문을 보내면 이 화면에 바로 올라옵니다.');
 
@@ -248,8 +274,8 @@ function attach(newSid, ended){
   }));
   offs.push(onChildRemoved(qRef, s => dropCard(s.key)));
 
-  offs.push(onValue(ref(db, `presence/${sid}`), s => $('#mOn').textContent  = String(s.size || 0)));
-  offs.push(onValue(ref(db, `attend/${sid}`),   s => $('#mAll').textContent = String(s.size || 0)));
+  offs.push(onValue(ref(db, `attend/${sid}`), s => $('#mAll').textContent = String(s.size || 0)));
+  offs.push(onValue(ref(db, `sessions/${sid}/screenClearAt`), s => applyClear(s.val() || 0)));
 }
 
 /* ── 시작 ── */

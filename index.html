@@ -4,77 +4,57 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
 <meta name="theme-color" content="#F3F2EE" />
-<title>질문하기</title>
+<title>교육 참여</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css" />
 <style>
   :root{
-    --paper:#F3F2EE;
-    --card:#FFFFFF;
-    --ink:#1A1E2B;
-    --muted:#767E90;
-    --line:#E2E1DB;
-    --accent:#0E7C66;         /* 딥 그린-틸 */
-    --accent-soft:#E6F1EE;
-    --badge:#B8891C;          /* 명찰 금박 */
-    --danger:#B4432B;
+    --paper:#F3F2EE; --card:#FFFFFF; --ink:#1A1E2B; --muted:#767E90; --line:#E2E1DB;
+    --accent:#0E7C66; --accent-soft:#E6F1EE; --badge:#B8891C; --danger:#B4432B;
     --sans:'Pretendard Variable',Pretendard,-apple-system,BlinkMacSystemFont,system-ui,'Malgun Gothic',sans-serif;
     --mono:'IBM Plex Mono','SFMono-Regular',Consolas,monospace;
   }
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
   html,body{height:100%}
-  body{
-    background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:16px;
-    display:flex;flex-direction:column;overflow:hidden;-webkit-font-smoothing:antialiased;
-  }
+  body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:16px;display:flex;flex-direction:column;overflow:hidden;-webkit-font-smoothing:antialiased}
   button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
   input,textarea{font-family:inherit;font-size:16px;color:inherit}
   .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
   .eyebrow{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
 
-  /* ══ 로그인 단계 ══ */
-  #gate{flex:1;display:flex;flex-direction:column;justify-content:center;padding:28px 22px;max-width:460px;margin:0 auto;width:100%}
-  #gate.hide{display:none}
-  .lead{margin-bottom:26px}
+  .screen{flex:1;display:none;flex-direction:column;justify-content:center;padding:28px 22px;max-width:460px;margin:0 auto;width:100%;overflow-y:auto}
+  .screen.on{display:flex;animation:rise .3s cubic-bezier(.2,.8,.3,1)}
+  @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+  .lead{margin-bottom:24px}
   .lead .eyebrow{display:block;margin-bottom:9px}
   .lead h1{font-size:26px;font-weight:700;letter-spacing:-.03em;line-height:1.3}
   .lead p{margin-top:9px;color:var(--muted);font-size:14.5px;line-height:1.65}
 
-  .step{display:none;animation:rise .3s cubic-bezier(.2,.8,.3,1)}
-  .step.on{display:block}
-  @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-
-  .field{margin-bottom:14px}
+  .field{margin-bottom:13px}
   .field label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin-bottom:6px}
-  .field input{
-    width:100%;padding:14px 15px;background:var(--card);border:1px solid var(--line);
-    border-radius:11px;outline:none;transition:.15s;
-  }
+  .field input{width:100%;padding:14px 15px;background:var(--card);border:1px solid var(--line);border-radius:11px;outline:none;transition:.15s}
   .field input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
-  .field input.mono{letter-spacing:.06em}
+  .field input.big{font-family:var(--mono);font-size:22px;letter-spacing:.28em;text-align:center;padding:16px 15px}
   .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 
-  .btn{
-    width:100%;padding:15px;border-radius:11px;background:var(--ink);color:#fff;
-    font-size:15.5px;font-weight:600;letter-spacing:-.01em;transition:.15s;
-  }
+  .btn{width:100%;padding:15px;border-radius:11px;background:var(--ink);color:#fff;font-size:15.5px;font-weight:600;letter-spacing:-.01em;transition:.15s}
   .btn:hover{opacity:.88}
-  .btn:disabled{opacity:.35;cursor:default}
+  .btn:disabled{opacity:.32;cursor:default}
   .btn.primary{background:var(--accent)}
-  .btn.ghost{background:transparent;color:var(--muted);border:1px solid var(--line);font-weight:500}
+  .btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line);font-weight:600}
   .btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-  .btns{display:flex;gap:9px;margin-top:16px}
+  .btns{display:flex;gap:9px;margin-top:15px}
   .btns .btn{margin:0}
+  .err{color:var(--danger);font-size:13.5px;margin-top:11px;line-height:1.55;min-height:1px}
 
-  .err{color:var(--danger);font-size:13.5px;margin-top:10px;line-height:1.55;min-height:1px}
+  .rule{display:flex;align-items:center;gap:14px;margin:26px 0 18px;color:#A9AEA5;font-size:12px}
+  .rule::before,.rule::after{content:'';flex:1;height:1px;background:var(--line)}
 
-  /* 명찰 카드 — 이 앱의 시그니처 */
-  .badge{
-    background:var(--card);border:1px solid var(--line);border-radius:14px;
-    padding:20px 20px 18px;position:relative;overflow:hidden;
-  }
+  /* 명찰 */
+  .badge{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 20px 18px;position:relative;overflow:hidden}
   .badge::before{content:'';position:absolute;left:0;right:0;top:0;height:5px;background:var(--badge)}
   .badge .who{font-size:24px;font-weight:700;letter-spacing:-.03em;margin:8px 0 5px}
   .badge .aff{color:var(--muted);font-size:14.5px}
@@ -82,152 +62,176 @@
   .badge .no span{font-size:12px;color:var(--muted)}
   .badge .no b{font-family:var(--mono);font-size:14px;font-weight:500;letter-spacing:.08em}
 
+  /* 대기실 */
+  .now{margin-top:16px;background:var(--card);border:1px solid var(--line);border-radius:13px;padding:17px 19px;text-align:center}
+  .now .eyebrow{display:block;margin-bottom:8px}
+  .now strong{font-size:18px;font-weight:700;letter-spacing:-.02em;line-height:1.4;display:block}
+  .now.empty strong{color:var(--muted);font-size:15.5px;font-weight:500}
+  .sublink{display:flex;gap:16px;justify-content:center;margin-top:18px}
+  .sublink button{font-size:13px;color:var(--muted);text-decoration:underline;text-underline-offset:3px}
+
   /* ══ 채팅 ══ */
   #room{flex:1;display:none;flex-direction:column;min-height:0}
   #room.on{display:flex}
-
-  .top{
-    flex:0 0 auto;display:flex;align-items:center;gap:12px;padding:12px 16px;
-    padding-top:calc(12px + env(safe-area-inset-top));
-    background:var(--card);border-bottom:1px solid var(--line);
-  }
+  .top{flex:0 0 auto;display:flex;align-items:center;gap:12px;padding:12px 16px;padding-top:calc(12px + env(safe-area-inset-top));background:var(--card);border-bottom:1px solid var(--line)}
   .top .me{min-width:0;flex:1}
   .top .me .eyebrow{display:block;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .top .me strong{font-size:15.5px;font-weight:700;letter-spacing:-.02em}
   .top .me em{font-style:normal;color:var(--muted);font-size:13px;margin-left:6px}
   .top button{padding:8px 12px;border:1px solid var(--line);border-radius:9px;font-size:12.5px;color:var(--muted);flex:0 0 auto}
 
-  #list{flex:1 1 auto;overflow-y:auto;padding:18px 16px 8px;display:flex;flex-direction:column;gap:14px;overscroll-behavior:contain}
-  .msg{max-width:82%;animation:rise .25s ease}
+  #list{flex:1 1 auto;overflow-y:auto;padding:18px 16px 8px;display:flex;flex-direction:column;align-items:flex-start;gap:14px;overscroll-behavior:contain}
+  .msg{flex:0 0 auto;max-width:82%;width:auto;animation:rise .25s ease}
   .msg .from{font-size:12px;color:var(--muted);margin:0 0 5px 3px}
   .msg .from b{color:var(--ink);font-weight:600}
-  .bub{background:var(--card);border:1px solid var(--line);border-radius:4px 14px 14px 14px;padding:12px 14px;font-size:15.5px;line-height:1.6;white-space:pre-wrap;word-break:break-word}
+  .bub{background:var(--card);border:1px solid var(--line);border-radius:4px 14px 14px 14px;padding:12px 14px;font-size:15.5px;line-height:1.6;white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere}
   .msg .at{font-family:var(--mono);font-size:10.5px;color:#9AA1B0;margin:5px 0 0 3px}
   .msg.mine{align-self:flex-end}
   .msg.mine .bub{background:var(--accent);color:#fff;border-color:var(--accent);border-radius:14px 4px 14px 14px}
   .msg.mine .at{text-align:right;margin:5px 3px 0 0}
   .msg.mine .from{display:none}
+  .msg.anon .from b{color:var(--badge)}
+  .sys{flex:0 0 auto;align-self:center;text-align:center;color:var(--muted);font-size:13px;line-height:1.7;padding:26px 20px;max-width:320px;white-space:pre-line}
 
-  .sys{align-self:center;text-align:center;color:var(--muted);font-size:13px;line-height:1.7;padding:26px 20px;max-width:320px}
-
-  .composer{
-    flex:0 0 auto;display:flex;gap:9px;align-items:flex-end;padding:11px 14px;
-    padding-bottom:calc(11px + env(safe-area-inset-bottom));
-    background:var(--card);border-top:1px solid var(--line);
-  }
-  .composer textarea{
-    flex:1;resize:none;max-height:120px;padding:12px 14px;border:1px solid var(--line);
-    border-radius:12px;outline:none;line-height:1.5;background:var(--paper);transition:.15s;
-  }
+  .composer{flex:0 0 auto;display:flex;gap:9px;align-items:flex-end;padding:11px 14px;padding-bottom:calc(11px + env(safe-area-inset-bottom));background:var(--card);border-top:1px solid var(--line)}
+  .composer .col{flex:1;min-width:0;display:flex;flex-direction:column;gap:7px}
+  .composer textarea{width:100%;resize:none;max-height:120px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;outline:none;line-height:1.5;background:var(--paper);transition:.15s}
   .composer textarea:focus{border-color:var(--accent);background:var(--card);box-shadow:0 0 0 3px var(--accent-soft)}
-  .composer button{
-    flex:0 0 auto;width:52px;height:46px;border-radius:12px;background:var(--accent);color:#fff;
-    font-size:14px;font-weight:600;transition:.15s;
-  }
-  .composer button:disabled{background:#C9CBC6}
+  .composer button.send{flex:0 0 auto;width:52px;height:46px;border-radius:12px;background:var(--accent);color:#fff;font-size:14px;font-weight:600;transition:.15s}
+  .composer button.send:disabled{background:#C9CBC6}
+  .anonrow{display:none;align-items:center;gap:8px}
+  .anonrow.on{display:flex}
+  .anontog{display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border:1px solid var(--line);border-radius:20px;font-size:12.5px;color:var(--muted);background:var(--paper);transition:.15s}
+  .anontog .sw{width:26px;height:15px;border-radius:9px;background:#D3D5CF;position:relative;transition:.18s;flex:0 0 auto}
+  .anontog .sw::after{content:'';position:absolute;top:2px;left:2px;width:11px;height:11px;border-radius:50%;background:#fff;transition:.18s}
+  .anontog.on{border-color:var(--badge);color:var(--badge);background:#FBF4E4;font-weight:600}
+  .anontog.on .sw{background:var(--badge)}
+  .anontog.on .sw::after{left:13px}
+  .anonhint{font-size:11.5px;color:#9AA1B0}
   .closed{padding:16px;text-align:center;color:var(--muted);font-size:13.5px;background:var(--card);border-top:1px solid var(--line)}
 
-  /* ══ 종료 화면 ══ */
+  /* ══ 종료 ══ */
   #done{flex:1;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:34px 24px}
   #done.on{display:flex}
   #done .seal{width:62px;height:62px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:29px;margin-bottom:20px}
   #done h2{font-size:25px;font-weight:700;letter-spacing:-.03em}
-  #done .pg{margin-top:9px;color:var(--muted);font-size:14.5px;line-height:1.65;max-width:300px}
+  #done .pg{margin-top:9px;color:var(--muted);font-size:14.5px;line-height:1.65;max-width:300px;white-space:pre-line}
   #done .cnt{margin-top:22px;padding:15px 26px;background:var(--card);border:1px solid var(--line);border-radius:13px}
   #done .cnt b{font-family:var(--mono);font-size:26px;font-weight:600;color:var(--badge);display:block}
   #done .cnt span{font-size:12px;color:var(--muted)}
   #done .btn{max-width:280px;margin-top:26px}
 
-  /* ══ 모달 (공지 / 확인) ══ */
+  /* ══ 모달 ══ */
   .veil{position:fixed;inset:0;background:rgba(26,30,43,.45);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;padding:22px;z-index:50}
   .veil.on{display:flex;animation:fade .2s ease}
   @keyframes fade{from{opacity:0}to{opacity:1}}
   .sheet{background:var(--card);border-radius:16px;padding:24px 22px 20px;max-width:400px;width:100%;animation:rise .28s cubic-bezier(.2,.8,.3,1);max-height:80vh;overflow:auto}
   .sheet .eyebrow{display:block;margin-bottom:10px;color:var(--badge)}
   .sheet h3{font-size:18px;font-weight:700;letter-spacing:-.02em;margin-bottom:8px}
-  .sheet .body{font-size:15px;line-height:1.7;white-space:pre-wrap;word-break:break-word;color:#333B4D}
+  .sheet .body{font-size:15px;line-height:1.7;white-space:pre-line;word-break:break-word;color:#333B4D}
   .sheet .btns{margin-top:20px}
-
   @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
 
-<!-- ══ 로그인 ══ -->
-<div id="gate">
+<!-- ══ 1. 사번 로그인 ══ -->
+<div class="screen on" id="gate">
   <div class="lead">
-    <span class="eyebrow" id="gpgm">연결하는 중</span>
-    <h1 id="gh">질문 채팅에 참여합니다</h1>
-    <p id="gp">사번을 입력하면 시작합니다.</p>
+    <span class="eyebrow" id="gPgm">연결하는 중</span>
+    <h1>교육에 참여합니다</h1>
+    <p>사번 6자리를 입력하세요.</p>
   </div>
+  <div class="field">
+    <label for="empNo">사번</label>
+    <input id="empNo" class="big" inputmode="numeric" autocomplete="username" placeholder="123456" maxlength="6" />
+  </div>
+  <button class="btn primary" id="doLogin">로그인</button>
+  <div class="err" id="e1"></div>
+  <div class="rule">처음이신가요?</div>
+  <button class="btn ghost" id="goReg">참가자 등록</button>
+</div>
 
-  <!-- 1단계: 사번 -->
-  <div class="step on" id="s1">
+<!-- ══ 2. 참가자 등록 ══ -->
+<div class="screen" id="reg">
+  <div class="lead">
+    <span class="eyebrow">참가자 등록</span>
+    <h1>명찰을 만듭니다</h1>
+    <p>한 번만 등록하면 다음부터는 사번만으로 들어옵니다.</p>
+  </div>
+  <div class="field">
+    <label for="rNo">사번</label>
+    <input id="rNo" class="mono" inputmode="numeric" placeholder="123456" maxlength="6" style="letter-spacing:.12em" />
+  </div>
+  <div class="field">
+    <label for="rName">성명</label>
+    <input id="rName" autocomplete="name" placeholder="홍길동" maxlength="20" />
+  </div>
+  <div class="row2">
     <div class="field">
-      <label for="empNo">사번</label>
-      <input id="empNo" class="mono" inputmode="latin" autocomplete="username" placeholder="예: 20180417" maxlength="20" />
+      <label for="rPos">직위 / 직책</label>
+      <input id="rPos" placeholder="책임" maxlength="20" />
     </div>
-    <button class="btn primary" id="go1">다음</button>
-    <div class="err" id="e1"></div>
-  </div>
-
-  <!-- 2단계: 기존 참가자 확인 -->
-  <div class="step" id="s2">
-    <div class="badge">
-      <span class="eyebrow">참가자 명찰</span>
-      <div class="who" id="cName">—</div>
-      <div class="aff" id="cAff">—</div>
-      <div class="no"><span>사번</span><b id="cNo" class="mono">—</b></div>
-    </div>
-    <div class="btns">
-      <button class="btn ghost" id="edit" style="flex:0 0 38%">정보 고치기</button>
-      <button class="btn primary" id="enter" style="flex:1">이대로 입장</button>
-    </div>
-    <div class="err" id="e2"></div>
-  </div>
-
-  <!-- 3단계: 신규 등록 -->
-  <div class="step" id="s3">
     <div class="field">
-      <label for="nName">성명</label>
-      <input id="nName" autocomplete="name" placeholder="홍길동" maxlength="20" />
+      <label for="rDept">부서</label>
+      <input id="rDept" placeholder="생산기술팀" maxlength="30" />
     </div>
-    <div class="row2">
-      <div class="field">
-        <label for="nPos">직위</label>
-        <input id="nPos" placeholder="책임" maxlength="20" />
-      </div>
-      <div class="field">
-        <label for="nDept">소속</label>
-        <input id="nDept" placeholder="생산기술팀" maxlength="30" />
-      </div>
-    </div>
-    <div class="btns">
-      <button class="btn ghost" id="back3" style="flex:0 0 38%">뒤로</button>
-      <button class="btn primary" id="save3" style="flex:1">저장하고 입장</button>
-    </div>
-    <div class="err" id="e3"></div>
+  </div>
+  <div class="btns">
+    <button class="btn ghost" id="regBack" style="flex:0 0 36%">뒤로</button>
+    <button class="btn primary" id="regSave" style="flex:1">등록</button>
+  </div>
+  <div class="err" id="e2"></div>
+</div>
+
+<!-- ══ 3. 대기실 ══ -->
+<div class="screen" id="lobby">
+  <div class="lead">
+    <span class="eyebrow">대기실</span>
+    <h1>입장을 기다립니다</h1>
+  </div>
+  <div class="badge">
+    <span class="eyebrow">참가자 명찰</span>
+    <div class="who" id="lName">—</div>
+    <div class="aff" id="lAff">—</div>
+    <div class="no"><span>사번</span><b id="lNo" class="mono">—</b></div>
+  </div>
+  <div class="now" id="lNow">
+    <span class="eyebrow">현재 과정</span>
+    <strong id="lPgm">—</strong>
+  </div>
+  <button class="btn primary" id="doEnter" style="margin-top:16px" disabled>입장하기</button>
+  <div class="err" id="e3"></div>
+  <div class="sublink">
+    <button id="lEdit">정보 고치기</button>
+    <button id="lOut">다른 사번으로</button>
   </div>
 </div>
 
-<!-- ══ 채팅방 ══ -->
+<!-- ══ 4. 채팅 ══ -->
 <div id="room">
   <div class="top">
     <div class="me">
-      <span class="eyebrow" id="rpgm">—</span>
-      <strong id="rName">—</strong><em id="rAff"></em>
+      <span class="eyebrow" id="rPgm">—</span>
+      <strong id="meName">—</strong><em id="meAff"></em>
     </div>
     <button id="out">나가기</button>
   </div>
   <div id="list"></div>
   <div class="composer" id="comp">
-    <textarea id="txt" rows="1" placeholder="궁금한 점을 적어 주세요" maxlength="1000"></textarea>
-    <button id="send" disabled>보내기</button>
+    <div class="col">
+      <div class="anonrow" id="anonRow">
+        <button class="anontog" id="anonTog"><span class="sw"></span>익명으로 보내기</button>
+        <span class="anonhint" id="anonHint">이름이 화면에 표시됩니다</span>
+      </div>
+      <textarea id="txt" rows="1" placeholder="궁금한 점을 적어 주세요" maxlength="1000"></textarea>
+    </div>
+    <button class="send" id="send" disabled>보내기</button>
   </div>
   <div class="closed" id="closedBar" style="display:none">지금은 질문을 받지 않습니다.</div>
 </div>
 
-<!-- ══ 종료 화면 ══ -->
+<!-- ══ 5. 종료 ══ -->
 <div id="done">
   <div class="seal">✓</div>
   <h2>수고하셨습니다</h2>
@@ -236,7 +240,7 @@
   <button class="btn primary" id="dAgain">처음으로</button>
 </div>
 
-<!-- ══ 공지 모달 ══ -->
+<!-- 공지 모달 -->
 <div class="veil" id="ntcVeil">
   <div class="sheet" role="dialog" aria-modal="true">
     <span class="eyebrow">공지</span>
@@ -244,13 +248,12 @@
     <div class="btns"><button class="btn" id="ntcOk">확인</button></div>
   </div>
 </div>
-
-<!-- ══ 확인 모달 ══ -->
+<!-- 확인 모달 -->
 <div class="veil" id="askVeil">
   <div class="sheet" role="dialog" aria-modal="true">
     <h3 id="askT">확인</h3>
     <div class="body" id="askB"></div>
-    <div class="btns">
+    <div class="btns" style="display:flex;gap:9px">
       <button class="btn ghost" id="askNo" style="flex:1">취소</button>
       <button class="btn" id="askYes" style="flex:1">확인</button>
     </div>
@@ -258,9 +261,6 @@
 </div>
 
 <script type="module">
-/* ══════════════════════════════════════════════════════════════
-   ① Firebase 설정 — screen.html / admin.html 과 똑같은 값을 넣으세요.
-   ══════════════════════════════════════════════════════════════ */
 const firebaseConfig = {
   apiKey: "AIzaSyAQpfOww8oxF3mYN_vRiRFYmKIdVf0uXU4",
   authDomain: "studyclass-a03b4.firebaseapp.com",
@@ -284,118 +284,138 @@ const db = getDatabase(app);
 const $ = s => document.querySelector(s);
 const el = (t,c,x) => { const n=document.createElement(t); if(c)n.className=c; if(x!=null)n.textContent=x; return n; };
 const hhmm = ts => { const d=new Date(ts||Date.now()); return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); };
-const clean = v => (v||'').trim().toUpperCase().replace(/[^A-Z0-9_-]/g,'');
+const digits = v => (v||'').replace(/[^0-9]/g,'');
+const NO_RE = /^[0-9]{6}$/;                 // 사번 6자리 숫자
 
 let me = null, sid = null, cfg = {}, offs = [], nodes = new Map();
 let inRoom = false, connWatch = null, presRef = null, myQ = 0, qWatch = null;
+let anon = false, lastNotice = null;
 
-/* ── 확인 모달 (브라우저 기본 confirm 대신) ── */
+/* ── 확인 모달 ── */
 function ask(title, body, yes='확인'){
   return new Promise(res => {
-    $('#askT').textContent = title; $('#askB').textContent = body; $('#askYes').textContent = yes;
+    $('#askT').textContent=title; $('#askB').textContent=body; $('#askYes').textContent=yes;
     $('#askVeil').classList.add('on');
     const done = v => { $('#askVeil').classList.remove('on'); $('#askYes').onclick=null; $('#askNo').onclick=null; res(v); };
-    $('#askYes').onclick = () => done(true);
-    $('#askNo').onclick  = () => done(false);
+    $('#askYes').onclick=()=>done(true); $('#askNo').onclick=()=>done(false);
   });
 }
+const show = id => ['gate','reg','lobby'].forEach(s => $('#'+s).classList.toggle('on', s===id));
 
-/* ── 단계 전환 ── */
-const step = n => { ['s1','s2','s3'].forEach((s,i)=>$('#'+s).classList.toggle('on', i===n-1)); ['e1','e2','e3'].forEach(e=>$('#'+e).textContent=''); };
+/* ══ 1. 로그인 ══ */
+$('#empNo').addEventListener('input', e => { e.target.value = digits(e.target.value).slice(0,6); });
+$('#rNo').addEventListener('input',   e => { e.target.value = digits(e.target.value).slice(0,6); });
+$('#empNo').addEventListener('keydown', e => { if (e.key==='Enter') $('#doLogin').click(); });
 
-/* ── 1단계: 사번 조회 ── */
-$('#go1').onclick = async () => {
-  const no = clean($('#empNo').value);
-  if (no.length < 3){ $('#e1').textContent = '사번을 3자 이상 입력해 주세요.'; return; }
-  $('#go1').disabled = true; $('#e1').textContent = '';
+$('#doLogin').onclick = async () => {
+  const no = $('#empNo').value.trim();
+  if (!NO_RE.test(no)){ $('#e1').textContent = '사번 6자리 숫자를 정확히 입력해 주세요.'; return; }
+  $('#doLogin').disabled = true; $('#e1').textContent = '';
   try{
     const snap = await get(ref(db, 'users/' + no));
-    if (snap.exists()){
-      const u = snap.val();
-      me = { empNo: no, name: u.name, position: u.position || '', dept: u.dept || '' };
-      $('#cName').textContent = u.name;
-      $('#cAff').textContent  = [u.position, u.dept].filter(Boolean).join(' · ') || '소속 정보 없음';
-      $('#cNo').textContent   = no;
-      step(2);
-    } else {
-      me = { empNo: no, name:'', position:'', dept:'' };
-      step(3); setTimeout(()=>$('#nName').focus(), 60);
+    if (!snap.exists()){
+      $('#e1').textContent = '등록되지 않은 사번입니다. 아래 ‘참가자 등록’으로 먼저 등록해 주세요.';
+      return;
     }
+    const u = snap.val();
+    me = { empNo: no, name: u.name, position: u.position || '', dept: u.dept || '' };
+    localStorage.setItem('qa_empNo', no);
+    toLobby();
   } catch(err){
-    $('#e1').textContent = '조회하지 못했습니다. 잠시 후 다시 시도해 주세요. (' + (err.code||err.message) + ')';
-  } finally { $('#go1').disabled = false; }
+    $('#e1').textContent = '조회하지 못했습니다. (' + (err.code || err.message) + ')';
+  } finally { $('#doLogin').disabled = false; }
 };
-$('#empNo').addEventListener('keydown', e => { if (e.key === 'Enter') $('#go1').click(); });
 
-/* ── 2단계 ── */
-$('#edit').onclick = () => {
-  $('#nName').value = me.name; $('#nPos').value = me.position; $('#nDept').value = me.dept;
-  step(3);
+/* ══ 2. 참가자 등록 ══ */
+$('#goReg').onclick = () => {
+  $('#rNo').value = $('#empNo').value.trim();
+  ['rName','rPos','rDept'].forEach(i => $('#'+i).value = '');
+  $('#e2').textContent = '';
+  show('reg'); setTimeout(()=>$(($('#rNo').value ? '#rName' : '#rNo')).focus(), 80);
 };
-$('#enter').onclick = () => joinRoom();
-
-/* ── 3단계: 신규/수정 저장 ── */
-$('#back3').onclick = () => step(1);
-$('#save3').onclick = async () => {
-  const name = $('#nName').value.trim(), pos = $('#nPos').value.trim(), dept = $('#nDept').value.trim();
-  if (!name){ $('#e3').textContent = '성명을 입력해 주세요.'; return; }
-  if (!dept){ $('#e3').textContent = '소속을 입력해 주세요.'; return; }
-  $('#save3').disabled = true;
+$('#regBack').onclick = () => show('gate');
+$('#regSave').onclick = async () => {
+  const no = $('#rNo').value.trim(), name = $('#rName').value.trim();
+  const pos = $('#rPos').value.trim(), dept = $('#rDept').value.trim();
+  if (!NO_RE.test(no)){ $('#e2').textContent = '사번 6자리 숫자를 정확히 입력해 주세요.'; return; }
+  if (!name){ $('#e2').textContent = '성명을 입력해 주세요.'; return; }
+  if (!dept){ $('#e2').textContent = '부서를 입력해 주세요.'; return; }
+  $('#regSave').disabled = true; $('#e2').textContent = '';
   try{
-    me = { empNo: me.empNo, name, position: pos, dept };
-    await update(ref(db, 'users/' + me.empNo), {
-      empNo: me.empNo, name, position: pos, dept, updatedAt: serverTimestamp()
-    });
-    joinRoom();
+    await update(ref(db, 'users/' + no), { empNo: no, name, position: pos, dept, updatedAt: serverTimestamp() });
+    me = { empNo: no, name, position: pos, dept };
+    localStorage.setItem('qa_empNo', no);
+    toLobby();
   } catch(err){
-    $('#e3').textContent = '저장하지 못했습니다. (' + (err.code||err.message) + ')';
-  } finally { $('#save3').disabled = false; }
+    $('#e2').textContent = '등록하지 못했습니다. (' + (err.code || err.message) + ')';
+  } finally { $('#regSave').disabled = false; }
 };
 
-/* ── 출석부에 올리고 접속 표시 켜기 ── */
+/* ══ 3. 대기실 ══ */
+function toLobby(){
+  $('#lName').textContent = me.name;
+  $('#lAff').textContent  = [me.position, me.dept].filter(Boolean).join(' · ') || '소속 정보 없음';
+  $('#lNo').textContent   = me.empNo;
+  $('#e3').textContent = '';
+  paintLobby();
+  show('lobby');
+}
+function paintLobby(){
+  const has = !!sid;
+  $('#lPgm').textContent = has ? (cfg.programName || '이름 없는 과정') : '현재 열린 과정이 없습니다.';
+  $('#lNow').classList.toggle('empty', !has);
+  $('#doEnter').disabled = !has;
+}
+$('#lEdit').onclick = () => {
+  $('#rNo').value = me.empNo; $('#rName').value = me.name;
+  $('#rPos').value = me.position; $('#rDept').value = me.dept;
+  $('#e2').textContent = ''; show('reg');
+};
+$('#lOut').onclick = () => { me = null; $('#empNo').value=''; $('#e1').textContent=''; show('gate'); };
+$('#doEnter').onclick = () => joinRoom();
+
+/* ══ 출석·접속 등록 ══ */
 async function registerAttend(){
   await update(ref(db, `attend/${sid}/${me.empNo}`), {
     name: me.name, position: me.position, dept: me.dept, lastJoinAt: serverTimestamp()
   });
   const snap = await get(ref(db, `attend/${sid}/${me.empNo}/joinedAt`));
-  if (!snap.exists()){                   // 이 과정에 처음 들어온 사람만 인원 집계에 더한다
+  if (!snap.exists()){
     await set(ref(db, `attend/${sid}/${me.empNo}/joinedAt`), serverTimestamp());
     await update(ref(db, `sessions/${sid}`), { pplTotal: increment(1) });
   }
-
-  // 접속 표시 — 창을 닫거나 연결이 끊기면 자동으로 사라집니다
   presRef = ref(db, `presence/${sid}/${me.empNo}`);
   onDisconnect(presRef).remove();
   await set(presRef, true);
-  if (!connWatch){                       // 감시는 한 번만 건다 (세션이 바뀌어도 중복 등록 금지)
+  if (!connWatch){
     connWatch = onValue(ref(db, '.info/connected'), s => {
       if (s.val() === true && presRef){ onDisconnect(presRef).remove(); set(presRef, true); }
     });
   }
 }
 
-/* ── 입장 ── */
+/* ══ 4. 입장 ══ */
 async function joinRoom(){
-  if (!sid){ $('#e2').textContent = '아직 열린 과정이 없습니다. 잠시 후 다시 시도해 주세요.'; return; }
-  localStorage.setItem('qa_empNo', me.empNo);
-  await registerAttend();
+  if (!sid){ $('#e3').textContent = '아직 열린 과정이 없습니다.'; return; }
+  $('#doEnter').disabled = true;
+  try{ await registerAttend(); }
+  catch(err){ $('#e3').textContent = '입장하지 못했습니다. (' + (err.code||err.message) + ')'; $('#doEnter').disabled = false; return; }
   inRoom = true;
 
   if (qWatch) qWatch();
   qWatch = onValue(ref(db, `attend/${sid}/${me.empNo}/qCount`), s => { myQ = s.val() || 0; });
 
-  $('#gate').classList.add('hide');
+  show(null);
   $('#done').classList.remove('on');
   $('#room').classList.add('on');
-  $('#rName').textContent = me.name;
-  $('#rAff').textContent  = [me.position, me.dept].filter(Boolean).join(' · ');
-  $('#rpgm').textContent  = cfg.programName || '진행 중인 과정';
-  applyOpen();
-  listen();
+  $('#meName').textContent = me.name;
+  $('#meAff').textContent  = [me.position, me.dept].filter(Boolean).join(' · ');
+  $('#rPgm').textContent   = cfg.programName || '진행 중인 과정';
+  applyOpen(); listen();
   setTimeout(()=>$('#txt').focus(), 200);
 }
 
-/* ── 방에서 완전히 빠져나오기 ── */
+/* ══ 퇴장 ══ */
 async function leaveRoom(){
   offs.forEach(f=>f()); offs = []; nodes.clear();
   if (qWatch){ qWatch(); qWatch = null; }
@@ -405,13 +425,10 @@ async function leaveRoom(){
     presRef = null;
   }
 }
-
-/* ── 과정이 끝나 자동 퇴장 ── */
 async function endedOut(endedName, nextOpen){
   const q = myQ;
   await leaveRoom();
-  $('#room').classList.remove('on');
-  $('#gate').classList.add('hide');
+  $('#room').classList.remove('on'); show(null);
   $('#dPg').textContent = (endedName ? `〈${endedName}〉 ` : '') + '과정이 끝났습니다.'
     + (nextOpen ? '\n다음 과정이 열려 있습니다.' : '');
   $('#dCnt').querySelector('b').textContent = String(q);
@@ -420,23 +437,20 @@ async function endedOut(endedName, nextOpen){
 }
 $('#dAgain').onclick = () => {
   $('#done').classList.remove('on');
-  $('#gate').classList.remove('hide');
-  step(1);
-  const saved = localStorage.getItem('qa_empNo');
-  if (saved) $('#empNo').value = saved;
+  if (me) toLobby();
+  else { const s = localStorage.getItem('qa_empNo'); if (s) $('#empNo').value = s; show('gate'); }
 };
-
-/* ── 직접 나가기 ── */
 $('#out').onclick = async () => {
-  if (!await ask('나가시겠어요?','다음에 들어올 때는 사번만 입력하면 됩니다.','나가기')) return;
+  if (!await ask('나가시겠어요?','대기실로 돌아갑니다. 다시 입장할 수 있습니다.','나가기')) return;
   await leaveRoom();
-  location.reload();
+  $('#room').classList.remove('on');
+  toLobby();
 };
 
-/* ── 메시지 듣기 ── */
+/* ══ 메시지 ══ */
 function listen(){
-  offs.forEach(f=>f()); offs = []; nodes.clear(); $('#list').innerHTML = '';
-  const list = $('#list');
+  offs.forEach(f=>f()); offs = []; nodes.clear();
+  const list = $('#list'); list.innerHTML = '';
   const holder = el('div','sys','아직 올라온 질문이 없습니다.\n첫 질문을 남겨 보세요.');
   list.append(holder);
 
@@ -444,11 +458,13 @@ function listen(){
   const draw = (key, m) => {
     if (m.hide) return;
     const mine = m.empNo === me.empNo;
-    const n = el('div','msg' + (mine?' mine':''));
+    const n = el('div','msg' + (mine?' mine':'') + (m.anon?' anon':''));
     n.append(el('div','from'), el('div','bub'), el('div','at'));
-    n.querySelector('.from').append(el('b', null, m.name || '이름 없음'), document.createTextNode(' ' + [m.position, m.dept].filter(Boolean).join(' · ')));
+    n.querySelector('.from').append(
+      el('b', null, m.anon ? '익명' : (m.name || '이름 없음')),
+      document.createTextNode(m.anon ? '' : ' ' + [m.position, m.dept].filter(Boolean).join(' · ')));
     n.querySelector('.bub').textContent = m.text || '';
-    n.querySelector('.at').textContent  = hhmm(m.ts);
+    n.querySelector('.at').textContent  = (mine && m.anon ? '익명 · ' : '') + hhmm(m.ts);
     list.append(n); nodes.set(key, n);
     holder.remove();
     const atEnd = list.scrollHeight - list.scrollTop - list.clientHeight < 160;
@@ -465,19 +481,34 @@ function listen(){
   }));
   offs.push(onChildRemoved(qRef, s => { const n=nodes.get(s.key); if(n){n.remove(); nodes.delete(s.key);} }));
 
-  // 공지 — 새로 올라온 것만 팝업
-  const nRef = query(ref(db, `notice/${sid}`), orderByChild('ts'), limitToLast(1));
-  offs.push(onChildAdded(nRef, s => {
-    const seen = localStorage.getItem('qa_notice_' + sid);
-    if (seen === s.key) return;
-    localStorage.setItem('qa_notice_' + sid, s.key);
-    $('#ntcBody').textContent = (s.val()||{}).text || '';
+  // 공지 — 노드 전체를 받아 가장 최근 것을 고른다 (색인에 기대지 않음)
+  offs.push(onValue(ref(db, `notice/${sid}`), s => {
+    const obj = s.val() || {};
+    const keys = Object.keys(obj);
+    if (!keys.length) return;
+    keys.sort((a,b) => (obj[a].ts||0) - (obj[b].ts||0));
+    const key = keys[keys.length-1];
+    if (key === lastNotice) return;
+    lastNotice = key;
+    if (localStorage.getItem('qa_notice_'+sid) === key) return;
+    localStorage.setItem('qa_notice_'+sid, key);
+    $('#ntcBody').textContent = obj[key].text || '';
     $('#ntcVeil').classList.add('on');
   }));
   $('#ntcOk').onclick = () => $('#ntcVeil').classList.remove('on');
 }
 
-/* ── 보내기 ── */
+/* ══ 익명 토글 ══ */
+function paintAnon(){
+  const allowed = cfg.anonAllowed !== false;
+  $('#anonRow').classList.toggle('on', allowed);
+  if (!allowed) anon = false;
+  $('#anonTog').classList.toggle('on', anon);
+  $('#anonHint').textContent = anon ? '이름 대신 ‘익명’으로 표시됩니다' : '이름이 화면에 표시됩니다';
+}
+$('#anonTog').onclick = () => { anon = !anon; paintAnon(); };
+
+/* ══ 보내기 ══ */
 const txt = $('#txt'), sendBtn = $('#send');
 const grow = () => { txt.style.height='auto'; txt.style.height = Math.min(120, txt.scrollHeight) + 'px'; sendBtn.disabled = !txt.value.trim(); };
 txt.addEventListener('input', grow);
@@ -487,11 +518,12 @@ txt.addEventListener('keydown', e => {
 sendBtn.onclick = async () => {
   const body = txt.value.trim();
   if (!body || !sid) return;
+  const useAnon = anon && cfg.anonAllowed !== false;
   txt.value = ''; grow(); sendBtn.disabled = true;
   try{
     await push(ref(db, `msg/${sid}`), {
       empNo: me.empNo, name: me.name, position: me.position, dept: me.dept,
-      text: body, ts: serverTimestamp(), done: false, hide: false
+      text: body, ts: serverTimestamp(), done: false, hide: false, anon: !!useAnon
     });
     await update(ref(db, `attend/${sid}/${me.empNo}`), { qCount: increment(1) });
     await update(ref(db, `sessions/${sid}`), { qTotal: increment(1) });
@@ -501,50 +533,40 @@ sendBtn.onclick = async () => {
   }
 };
 
-/* ── 질문 받기 On/Off ── */
 function applyOpen(){
   const open = cfg.chatOpen !== false;
   $('#comp').style.display = open ? 'flex' : 'none';
   $('#closedBar').style.display = open ? 'none' : 'block';
+  paintAnon();
 }
 
-/* ── 시작 ── */
+/* ══ 시작 ══ */
 signInAnonymously(auth).then(() => {
   onValue(ref(db, 'config'), async s => {
     cfg = s.val() || {};
     const nm = cfg.programName || '이름 없는 과정';
-    $('#gpgm').textContent = nm; $('#rpgm').textContent = nm; document.title = nm;
-    applyOpen();                                   // 질문 받기 On/Off는 언제 바뀌어도 즉시 반영
+    $('#gPgm').textContent = sid ? nm : '교육 질의응답';
+    $('#rPgm').textContent = nm;
+    document.title = nm;
+    applyOpen();
 
     const newSid = cfg.sessionId || null;
-    const wasIn = inRoom ? sid : null;             // 내가 있던 과정
+    const wasIn = inRoom ? sid : null;
     sid = newSid;
 
-    // 내가 있던 과정이 끝났거나 다른 과정으로 바뀌면 자동 퇴장한다.
-    // 프로그램마다 참가자가 다르므로 절대 자동으로 옮겨 태우지 않는다.
+    // 프로그램마다 참가자가 다르므로 자동으로 옮겨 태우지 않고 반드시 내보낸다
     if (wasIn && wasIn !== newSid){
       const ended = cfg.lastEnded || {};
       await endedOut(ended.name || null, !!newSid);
       return;
     }
-    if (!newSid){
-      if (!inRoom && !$('#done').classList.contains('on')){
-        $('#gh').textContent = '아직 열린 과정이 없습니다';
-        $('#gp').textContent = '강사가 과정을 시작하면 바로 참여할 수 있습니다.';
-      }
-      return;
-    }
-    if (!inRoom){
-      $('#gh').textContent = '질문 채팅에 참여합니다';
-      $('#gp').textContent = '사번을 입력하면 시작합니다. 두 번째부터는 사번만으로 들어옵니다.';
-    }
+    if (!inRoom && !$('#done').classList.contains('on')) paintLobby();
   });
 
   const saved = localStorage.getItem('qa_empNo');
-  if (saved){ $('#empNo').value = saved; }
+  if (saved) $('#empNo').value = saved;
 }).catch(e => {
-  $('#gh').textContent = '접속하지 못했습니다';
-  $('#gp').textContent = 'Firebase 익명 로그인이 켜져 있는지 확인해 주세요. (' + (e.code||e.message) + ')';
+  $('#e1').textContent = '접속하지 못했습니다. (' + (e.code||e.message) + ')';
 });
 </script>
 </body>
