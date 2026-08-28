@@ -46,18 +46,19 @@
 
   /* 숫자 상자 — 글자 크기를 바꿔도 흔들리지 않도록 고정 치수로 둔다.
      자릿수가 늘어도 폭이 안 튀게 min-width와 등폭 숫자를 쓴다. */
-  .meters{display:flex;align-items:center;gap:10px;flex:0 0 auto}
-  .meter{
-    display:inline-flex;align-items:baseline;gap:10px;
-    background:#1B2029;border:1px solid #2B3242;border-radius:9px;padding:8px 15px;
-  }
-  .meter span{font-size:12.5px;color:var(--muted);font-weight:600;letter-spacing:.02em}
-  .meter b{
-    font-family:var(--mono);font-size:21px;font-weight:600;line-height:1;
-    font-variant-numeric:tabular-nums;min-width:2.2ch;text-align:right;
-  }
-  .meter.q{background:#231F16;border-color:rgba(242,193,78,.34)}
-  .meter.q b{color:var(--badge)}
+  /* 상자 두 개를 따로 두면 글꼴·자릿수에 따라 서로 다르게 보인다.
+     한 틀 안에 칸을 나눠 두 칸의 치수를 못 어긋나게 못박는다. */
+  .meters{display:flex;align-items:center;gap:12px;flex:0 0 auto}
+  .gauge{display:flex;align-items:stretch;flex:0 0 auto;
+    background:#1B2029;border:1px solid #2B3242;border-radius:10px;overflow:hidden}
+  .cell{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;
+    height:46px;padding:0 17px;min-width:116px;box-sizing:border-box}
+  .cell + .cell{border-left:1px solid #2B3242}
+  .cell span{flex:0 0 auto;font-size:12.5px;font-weight:600;color:var(--muted);letter-spacing:.02em}
+  .cell b{flex:0 0 auto;font-family:var(--mono);font-size:22px;font-weight:600;line-height:1;
+    font-variant-numeric:tabular-nums}
+  .cell.q{background:#231F16}
+  .cell.q b{color:var(--badge)}
 
   .zoom{display:flex;gap:6px;margin-left:6px}
   .zoom button{
@@ -100,6 +101,20 @@
   .q p{font-size:calc(19px * var(--qs));line-height:1.62;white-space:pre-wrap;word-break:break-word}
   .q > time{display:block;text-align:right;margin-top:10px;font-family:var(--mono);font-size:11.5px;color:#5D6779}
 
+  /* 문답모드 답안 — 답이 짧으므로 카드를 낮추고, 맞은 답에는 도장을 찍는다 */
+  .q.ans{padding:calc(28px * var(--qs)) 20px 14px}
+  .q.ans p{font-size:calc(25px * var(--qs));font-weight:700;padding-right:120px;letter-spacing:-.02em}
+  .q.ans > time{display:none}
+  .q.ans .mark{position:absolute;right:20px;top:50%;transform:translateY(-50%);display:flex;align-items:center;gap:11px}
+  .q.ans .mark .rk{font-family:var(--mono);font-size:calc(21px * var(--qs));font-weight:600}
+  .q.ans .mark .st{width:calc(46px * var(--qs));height:calc(46px * var(--qs));border-radius:50%;
+    display:grid;place-items:center;font-size:calc(23px * var(--qs));font-weight:800}
+  .q.ans.ok{background:#16241E;box-shadow:inset 0 0 0 1px rgba(95,191,155,.4)}
+  .q.ans.ok .mark .st{background:var(--ok);color:#0E1A16}
+  .q.ans.ok .mark .rk{color:var(--ok)}
+  .q.ans.no{background:#20242E;opacity:.78}
+  .q.ans.no .mark .st{background:#333B49;color:#78828F}
+
   .q.fresh{box-shadow:0 0 0 2px var(--c,var(--badge)),0 14px 36px -16px rgba(0,0,0,.75)}
   .q.done{opacity:.45}
   .q.done .tag{background:#39414F;color:#AAB2C0;box-shadow:none}
@@ -118,6 +133,24 @@
   #note .fin b{display:block;font-family:var(--mono);font-size:30px;font-weight:600;color:var(--badge)}
   #note .fin span{font-size:12px;color:#5B6578}
   .wrap{position:relative;flex:1 1 auto;min-height:0;display:flex;flex-direction:column}
+
+  /* 강사에게만 보내는 안내 — 강의 중에도 눈에 걸리도록 화면 맨 위를 차지한다.
+     밝은 종이색에 짙은 글씨(대비 13.4:1)로 두어 어떤 모니터에서도 읽힌다. */
+  #tnote{
+    flex:0 0 auto;display:none;align-items:center;gap:18px;
+    background:#F5D97A;border-top:5px solid #D9463A;
+    padding:16px 26px;animation:drop .4s cubic-bezier(.2,.85,.3,1);
+  }
+  #tnote.on{display:flex}
+  @keyframes drop{from{opacity:0;transform:translateY(-100%)}to{opacity:1;transform:none}}
+  #tnote .dot{flex:0 0 auto;width:13px;height:13px;border-radius:50%;background:#D9463A;
+    animation:tpulse 1.6s ease-in-out infinite}
+  @keyframes tpulse{50%{opacity:.25;transform:scale(.8)}}
+  #tnote .body{min-width:0;flex:1}
+  #tnote .lab{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.22em;
+    color:#8A5A12;text-transform:uppercase;margin-bottom:5px;font-weight:600}
+  #tnote p{font-size:calc(23px * var(--qs));font-weight:700;line-height:1.45;color:#241705;
+    letter-spacing:-.02em;white-space:pre-line;word-break:break-word}
 
   /* 새 질문 알림 */
   #flash{
@@ -166,6 +199,14 @@
 </head>
 <body>
 
+<div id="tnote">
+  <span class="dot"></span>
+  <div class="body">
+    <span class="lab">운영 담당자 안내</span>
+    <p id="tnoteText"></p>
+  </div>
+</div>
+
 <header>
   <div class="brand">
     <span class="live" id="live"></span>
@@ -175,8 +216,10 @@
     </div>
   </div>
   <div class="meters">
-    <div class="meter"><span>출석</span><b id="mAll">0</b></div>
-    <div class="meter q"><span>질문</span><b id="mQ">0</b></div>
+    <div class="gauge">
+      <div class="cell"><span>출석</span><b id="mAll">0</b></div>
+      <div class="cell q"><span>질문</span><b id="mQ">0</b></div>
+    </div>
     <div class="zoom">
       <button id="zOut" title="글자 작게" aria-label="글자 작게">A−</button>
       <button id="zIn" title="글자 크게" aria-label="글자 크게">A＋</button>
@@ -233,7 +276,8 @@ const db   = getDatabase(app);
 const $ = s => document.querySelector(s);
 const board = $('#board'), scroller = $('#scroller'), note = $('#note');
 const cards = new Map();          // 메시지키 → DOM 요소
-const syncCount = () => document.querySelector('#mQ').textContent = String(cards.size);
+const syncCount = () => document.querySelector('#mQ').textContent =
+  String([...cards.values()].filter(n => !n.dataset.quiz).length);
 let sid, attached = null, offs = [];   // 현재 세션 / 실제로 리스너를 건 세션
 let quiz = { on:false }, quizMode = 'contains', quizHits = {}, judged = new Set();
 let clearAt = 0, primeUntil = 0;       // 화면 정리 기준 시각 / 첫 로딩 알림 억제
@@ -317,23 +361,31 @@ function paint(node, m){
   node.querySelector('p').textContent    = m.text || '';
 }
 
-function addCard(key, m){
-  if (m.hide || m.quizRound || (m.ts || 0) <= clearAt) return;   // 퀴즈 답안은 질문이 아니다
-  const node = el('article','q');
+function addCard(key, m, v){
+  if (m.hide || (m.ts || 0) <= clearAt) return;
+  if (m.quizRound && !v) return;                    // 문답모드가 아닐 때의 지난 답안은 띄우지 않는다
+  const node = el('article','q' + (v ? ' ans ' + (v.ok ? 'ok' : 'no') : ''));
   node.dataset.ts = m.ts || 0;
   node.dataset.no = m.empNo || '';
   node.dataset.anon = m.anon ? '1' : '';
+  if (v) node.dataset.quiz = '1';
   node.style.setProperty('--c', colorOf(m.empNo, m.anon));
   const tag = el('span','tag');
   tag.append(el('span','nm'), el('span','aff'));
   node.append(tag, el('p'), el('time'));
+  if (v){
+    const mk = el('div','mark');
+    if (v.ok && v.rank) mk.append(el('span','rk', String(v.rank)));
+    mk.append(el('span','st', v.ok ? '✓' : '✕'));
+    node.append(mk);
+  }
   paint(node, m);
   if (newestBottom) board.append(node); else board.prepend(node);
   cards.set(key, node);
   node.classList.add('fresh');
   setTimeout(() => node.classList.remove('fresh'), 9000);
   syncCount(); hideNote();
-  if (Date.now() > primeUntil) flash();
+  if (!v && Date.now() > primeUntil) flash();       // 답안이 올라올 때마다 알림을 띄우지는 않는다
   scrollNewest();
 }
 
@@ -384,12 +436,13 @@ function attach(newSid, ended){
   }
   if (attached === sid) return;
   attached = sid; clearAt = 0; order = new Map(); primeUntil = Date.now() + 2000;
-  quiz = { on:false }; quizHits = {}; judged = new Set(); paintQuiz();   // 첫 로딩 때는 알림 억제
+  quiz = { on:false }; quizHits = {}; judged = new Set(); paintQuiz();
+  $('#tnote').classList.remove('on'); $('#tnoteText').textContent = '';   // 첫 로딩 때는 알림 억제
   $('#live').classList.add('on');
   showNote('질문을 기다리는 중입니다','참가자가 질문을 보내면 이 화면에 바로 올라옵니다.');
 
   const qRef = query(ref(db, `msg/${sid}`), orderByChild('ts'), limitToLast(200));
-  offs.push(onChildAdded(qRef, s => { judge(s.key, s.val()); addCard(s.key, s.val()); }));
+  offs.push(onChildAdded(qRef, s => { const m = s.val(); addCard(s.key, m, judge(s.key, m)); }));
   offs.push(onChildChanged(qRef, s => {
     const m = s.val(), n = cards.get(s.key);
     if (m.hide){ dropCard(s.key); return; }
@@ -408,8 +461,18 @@ function attach(newSid, ended){
     repaintColors();
   }));
   offs.push(onValue(ref(db, `sessions/${sid}/screenClearAt`), s => applyClear(s.val() || 0)));
-  offs.push(onValue(ref(db, `quiz/${sid}`), s => { quiz = s.val() || { on:false }; paintQuiz(); }));
+  offs.push(onValue(ref(db, `quiz/${sid}`), s => {
+    const prev = quiz.round;
+    quiz = s.val() || { on:false };
+    if (quiz.round !== prev) judged = new Set(Object.keys(quizHits[quiz.round] || {}));
+    paintQuiz();
+  }));
   offs.push(onValue(ref(db, `quizHit/${sid}`), s => { quizHits = s.val() || {}; paintHits(); }));
+  offs.push(onValue(ref(db, `teachNote/${sid}`), s => {
+    const n = s.val();
+    $('#tnoteText').textContent = (n && n.text) || '';
+    $('#tnote').classList.toggle('on', !!(n && n.text));
+  }));
 }
 
 /* ══════════ 돌발퀴즈 ══════════
@@ -418,18 +481,21 @@ function attach(newSid, ended){
 const norm = t => String(t||'').toLowerCase().replace(/\s+/g,'');
 
 function judge(key, m){
-  if (!quiz.on || !m || m.quizRound !== quiz.round) return;
-  if (judged.has(m.empNo)) return;
-  if ((quizHits[quiz.round] || {})[m.empNo]) { judged.add(m.empNo); return; }
+  if (!quiz.on || !m || m.quizRound !== quiz.round) return null;
   const got = norm(m.text);
   const list = (quiz.answers || []).map(norm).filter(Boolean);
   const hit = list.some(a => quiz.mode === 'exact' ? got === a : got.includes(a));
-  if (!hit) return;
+  if (!hit) return { ok:false };                     // 오답도 강사가 봐야 하므로 결과를 돌려준다
+
+  const already = judged.has(m.empNo) || !!(quizHits[quiz.round] || {})[m.empNo];
+  if (already){ judged.add(m.empNo); return { ok:true, rank:0 }; }
   judged.add(m.empNo);
+  const rank = Math.max(judged.size, Object.keys(quizHits[quiz.round] || {}).length + 1);
   set(ref(db, `quizHit/${sid}/${quiz.round}/${m.empNo}`), {
     name: m.name || '', position: m.position || '', dept: m.dept || '',
-    text: m.text || '', at: Date.now(), quizAnswer: (quiz.answers || []).join(', ')
+    text: m.text || '', at: Date.now(), rank, quizAnswer: (quiz.answers || []).join(', ')
   }).catch(() => judged.delete(m.empNo));
+  return { ok:true, rank };
 }
 
 const qzPanel = $('#qzPanel'), qzBtn = $('#qzBtn');

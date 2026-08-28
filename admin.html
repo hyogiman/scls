@@ -68,7 +68,9 @@
   .stat.b b{color:var(--badge)}
 
   .livebar{flex:0 0 auto;display:flex;align-items:center;gap:10px;padding:11px 20px;background:var(--card);border-bottom:1px solid var(--line);flex-wrap:wrap}
-  .livebar .clock{font-family:var(--mono);font-size:13px;color:var(--muted);flex:1;min-width:120px}
+  .livebar .what{flex:1;min-width:150px}
+  .livebar .what strong{display:block;font-size:14.5px;font-weight:700;letter-spacing:-.02em;margin-bottom:2px}
+  .livebar .clock{display:block;font-family:var(--mono);font-size:12px;color:var(--muted)}
   .livebar .clock b{color:var(--ink);font-weight:600}
 
   .tabs{flex:0 0 auto;display:flex;gap:2px;padding:0 14px;background:var(--card);border-bottom:1px solid var(--line);overflow-x:auto}
@@ -135,8 +137,11 @@
   .qhead .filters{margin:0;flex:1}
 
   /* ══ 출석부 ══ */
-  .tblwrap{background:var(--card);border:1px solid var(--line);border-radius:13px;overflow:hidden}
+  .tblwrap{background:var(--card);border:1px solid var(--line);border-radius:13px;
+    overflow-x:auto;-webkit-overflow-scrolling:touch}
+  table{min-width:660px}
   table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th,td{white-space:nowrap}
   th{background:var(--paper);text-align:left;padding:11px 12px;font-size:11.5px;font-weight:600;color:var(--muted);border-bottom:1px solid var(--line);white-space:nowrap}
   td{padding:11px 12px;border-bottom:1px solid var(--line)}
   tr:last-child td{border-bottom:none}
@@ -176,6 +181,13 @@
 
   .empty{text-align:center;color:var(--muted);font-size:13.5px;padding:44px 20px;line-height:1.7;white-space:pre-line}
 
+  .seg{display:inline-flex;background:var(--paper);border:1px solid var(--line);border-radius:9px;padding:3px;gap:3px;margin-bottom:12px}
+  .seg button{padding:8px 15px;border-radius:6px;font-size:13px;font-weight:600;color:var(--muted);transition:.15s}
+  .seg button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(26,30,43,.1)}
+  .seg button.on[data-t="teacher"]{background:#4A2018;color:#F5D97A}
+  .tnview{background:#FFF8E1;border:1px solid #E4CE8A;border-top:4px solid #D9463A;border-radius:10px;
+    padding:15px 16px;font-size:15px;line-height:1.65;white-space:pre-line;word-break:break-word;color:#2A1D0A}
+
   .ntc{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:13px 15px;margin-bottom:9px;display:flex;gap:12px;align-items:flex-start}
   .ntc .bd{flex:1;font-size:14px;line-height:1.6;white-space:pre-wrap;word-break:break-word}
   .ntc time{font-family:var(--mono);font-size:11px;color:#9AA1B0;flex:0 0 auto}
@@ -214,8 +226,8 @@
 <div id="app">
   <div class="top">
     <div class="t">
-      <span class="eyebrow">운영 관리</span>
-      <strong id="tPgm">—</strong>
+      <span class="eyebrow">Study Class</span>
+      <strong>운영 관리</strong>
     </div>
     <div class="modes">
       <button id="mLive" class="on">진행 중<span class="badge" id="liveDot"></span></button>
@@ -233,7 +245,7 @@
       <div class="stat"><b id="sP">0</b><span>질문한 사람</span></div>
     </div>
     <div class="livebar" id="liveBar">
-      <span class="clock" id="elapsed">경과 —</span>
+      <div class="what"><strong id="liveName">—</strong><span class="clock" id="elapsed">경과 —</span></div>
       <button class="btn ghost sm" id="toggleOpen">소통창 닫기</button>
       <button class="btn ghost sm" id="toggleAnon">익명 허용 끄기</button>
       <button class="btn warn sm" id="endNow">과정 종료</button>
@@ -287,11 +299,23 @@
 
     <div class="pane" id="ln"><div class="inner">
       <div class="block">
-        <h3>공지 띄우기</h3>
-        <p class="desc">지금 참여 중인 참가자 화면에 팝업으로 뜹니다. 늦게 들어온 사람에게는 가장 최근 공지 하나가 보입니다.</p>
+        <h3>공지 보내기</h3>
+        <div class="seg" id="ntcTarget">
+          <button class="on" data-t="all">참가자에게</button>
+          <button data-t="teacher">강사에게</button>
+        </div>
+        <p class="desc" id="ntcDesc">지금 참여 중인 참가자 화면에 팝업으로 뜹니다. 늦게 들어온 사람에게는 가장 최근 공지 하나가 보입니다.</p>
         <textarea class="note" id="ntcIn" placeholder="예: 10분 뒤 조별 토의를 시작합니다." maxlength="500"></textarea>
-        <button class="btn primary wide" id="ntcSend">공지 띄우기</button>
+        <button class="btn primary wide" id="ntcSend">참가자에게 띄우기</button>
       </div>
+
+      <div class="block" id="tnBlock" style="display:none">
+        <h3>강사 화면에 떠 있는 안내</h3>
+        <p class="desc">강사가 직접 내릴 수 없습니다. 전달됐다고 판단되면 여기서 내려 주세요.</p>
+        <div class="tnview" id="tnView">—</div>
+        <button class="btn ghost wide" id="tnOff">내리기</button>
+      </div>
+
       <div id="ntcList"></div>
     </div></div>
 
@@ -335,7 +359,7 @@
           <input id="crsName" placeholder="과정 이름 (예: 09:00 안전리더십 1조)" maxlength="60" style="flex:3 1 100%" />
           <input id="crsTeacher" placeholder="강사 (예: 정인혁 책임)" maxlength="30" style="flex:1 1 150px" />
           <input id="crsWhen" placeholder="일시 메모 (예: 8/28 오전)" maxlength="30" style="flex:1 1 130px" />
-          <input id="crsCode" class="mono" placeholder="입장코드 (비우면 자동 생성)" maxlength="4" style="flex:1 1 170px;text-transform:uppercase" />
+          <input id="crsCode" class="mono" placeholder="입장코드 (비우면 없음)" maxlength="4" style="flex:1 1 170px;text-transform:uppercase" />
           <button class="btn" id="crsAdd" style="flex:0 0 auto">등록</button>
         </div>
       </div>
@@ -465,6 +489,7 @@ const ALL = '__ALL__';
 
 let cfg = {}, courses = {}, secrets = {}, stats = {}, quizzes = {}, activeSid = null;
 let liveOff = [], liveSid = null, liveMsgs = {}, liveRoster = {}, liveOnline = {}, blocked = {}, quizHits = {};
+let ntcTo = 'all', teachNote = null;
 let detOff  = [], detSid  = null, detMsgs  = {}, detRoster  = {}, allAttend = {};
 let lFilter = 'all', dFilter = 'all';
 
@@ -586,9 +611,8 @@ function boot(){
 function applyConfig(){
   activeSid = cfg.sessionId || null;
   const c = activeSid ? (courses[activeSid]||{}) : {};
-  const nm = activeSid ? (c.name || cfg.programName || '이름 없는 과정')
-                       : ((cfg.lastEnded && cfg.lastEnded.name) ? `${cfg.lastEnded.name} — 끝남` : '진행 중인 과정 없음');
-  $('#tPgm').textContent = nm;
+  const nm = activeSid ? (c.name || cfg.programName || '이름 없는 과정') : '';
+  $('#liveName').textContent = nm;
   $('#liveDot').classList.toggle('on', !!activeSid);
 
   const on = !!activeSid;
@@ -634,7 +658,7 @@ function drawElapsed(){
 function attachLive(){
   if (liveSid === activeSid) return;
   liveOff.forEach(f=>f()); liveOff=[];
-  liveSid = activeSid; liveMsgs={}; liveRoster={}; liveOnline={}; blocked={}; quizHits={};
+  liveSid = activeSid; liveMsgs={}; liveRoster={}; liveOnline={}; blocked={}; quizHits={}; teachNote=null; paintNtc();
   drawLiveQ(); drawLiveRoster(); drawLiveStats(); drawNotices({});
   if (!liveSid) return;
   liveOff.push(onValue(query(ref(db,`msg/${liveSid}`), orderByChild('ts'), limitToLast(500)), s => { liveMsgs=s.val()||{}; drawLiveQ(); drawLiveStats(); }));
@@ -642,6 +666,7 @@ function attachLive(){
   liveOff.push(onValue(ref(db,`presence/${liveSid}`), s => { liveOnline=s.val()||{}; drawLiveRoster(); drawLiveStats(); }));
   liveOff.push(onValue(ref(db,`blocked/${liveSid}`), s => { blocked = s.val()||{}; drawBlocked(); }));
   liveOff.push(onValue(ref(db,`quizHit/${liveSid}`), s => { quizHits = s.val()||{}; drawQuiz(); }));
+  liveOff.push(onValue(ref(db,`teachNote/${liveSid}`), s => { teachNote = s.val(); paintNtc(); }));
   liveOff.push(onValue(ref(db,`notice/${liveSid}`), s => drawNotices(s.val()||{})));
 }
 
@@ -812,17 +837,45 @@ $('#dCsv').onclick = () => detSid === ALL ? csv(aggregate(), true, '전체합산
                                           : csv(rosterRows(detRoster,null), false, (courses[detSid]||{}).name || '과정');
 
 /* ══ 공지 ══ */
+/* ══ 공지 — 참가자 팝업 / 강사 화면 상단 고정 ══ */
+$$('#ntcTarget button').forEach(b => b.onclick = () => {
+  $$('#ntcTarget button').forEach(x => x.classList.toggle('on', x === b));
+  ntcTo = b.dataset.t; paintNtc();
+});
+function paintNtc(){
+  const teach = ntcTo === 'teacher';
+  $('#ntcDesc').textContent = teach
+    ? '강사 화면 맨 위에 크게 고정됩니다. 참가자에게는 보이지 않습니다. 쉬는 시간 안내처럼 강의 중 전할 말에 쓰세요.'
+    : '지금 참여 중인 참가자 화면에 팝업으로 뜹니다. 늦게 들어온 사람에게는 가장 최근 공지 하나가 보입니다.';
+  $('#ntcSend').textContent = teach ? '강사 화면에 띄우기' : '참가자에게 띄우기';
+  $('#ntcIn').placeholder = teach ? '예: 10분 뒤 쉬는 시간 부탁드립니다.' : '예: 10분 뒤 조별 토의를 시작합니다.';
+  $('#ntcList').style.display = teach ? 'none' : '';
+  const has = !!(teachNote && teachNote.text);
+  $('#tnBlock').style.display = has ? '' : 'none';
+  if (has) $('#tnView').textContent = teachNote.text;
+}
 $('#ntcSend').onclick = async () => {
   const body = $('#ntcIn').value.trim();
-  if (!body){ toast('공지 내용을 입력하세요'); return; }
+  if (!body){ toast('보낼 내용을 입력하세요'); return; }
   if (!activeSid){ toast('진행 중인 과정이 없습니다 — 과정을 먼저 진행하세요'); return; }
   const btn = $('#ntcSend'); btn.disabled = true;
   try{
-    await push(ref(db,`notice/${activeSid}`), { text: body, ts: Date.now() });
-    $('#ntcIn').value=''; toast('공지를 띄웠습니다');
+    if (ntcTo === 'teacher'){
+      await set(ref(db,`teachNote/${activeSid}`), { text: body, at: Date.now() });
+      $('#ntcIn').value=''; toast('강사 화면에 띄웠습니다');
+    } else {
+      await push(ref(db,`notice/${activeSid}`), { text: body, ts: Date.now() });
+      $('#ntcIn').value=''; toast('참가자에게 공지를 띄웠습니다');
+    }
   } catch(e){
-    await ask('공지를 보내지 못했습니다', '오류: ' + (e.code || e.message) + '\n\nFirebase 보안 규칙에서 notice 쓰기가 막혀 있을 수 있습니다.', '닫기');
+    await ask('보내지 못했습니다', '오류: ' + (e.code || e.message) + '\n\nFirebase 보안 규칙에서 쓰기가 막혀 있을 수 있습니다.', '닫기');
   } finally { btn.disabled = false; }
+};
+$('#tnOff').onclick = async () => {
+  if (!activeSid) return;
+  try { await remove(ref(db,`teachNote/${activeSid}`)); }
+  catch(e){ return toast('내리지 못했습니다: ' + (e.code||e.message)); }
+  toast('강사 화면에서 내렸습니다');
 };
 function drawNotices(obj){
   const box = $('#ntcList'); box.innerHTML='';
@@ -888,10 +941,10 @@ $('#crsAdd').onclick = async () => {
   if (!nm){ toast('과정 이름을 입력하세요'); return; }
   const d = new Date();
   const id = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}-${String(d.getHours()).padStart(2,'0')}${String(d.getMinutes()).padStart(2,'0')}${String(d.getSeconds()).padStart(2,'0')}`;
-  const code = cleanCode($('#crsCode').value) || rndCode();          // 비워두면 자동으로 뽑는다
+  const code = cleanCode($('#crsCode').value);                       // 비워두면 코드 없이 운영한다
   await set(ref(db,`sessions/${id}`), { name:nm, when:$('#crsWhen').value.trim(), teacher:$('#crsTeacher').value.trim(),
                                          createdAt: serverTimestamp() });
-  await set(ref(db,`secret/${id}/code`), code);
+  await set(ref(db,`secret/${id}/code`), code || null);
   $('#crsName').value=''; $('#crsWhen').value=''; $('#crsTeacher').value=''; $('#crsCode').value='';
   toast('과정을 등록했습니다');
 };
@@ -903,7 +956,7 @@ async function closeActive(){
   await update(ref(db,`sessions/${activeSid}`), { closedAt: serverTimestamp() });
   await remove(ref(db,`presence/${activeSid}`));
   const st = stats[activeSid] || {};
-  return { name: prev.name || '', at: Date.now(), ppl: st.ppl || 0, q: st.q || 0 };
+  return { sid: activeSid, name: prev.name || '', at: Date.now(), ppl: st.ppl || 0, q: st.q || 0 };
 }
 
 $('#endNow').onclick = async () => {
@@ -954,7 +1007,8 @@ async function dropCourse(id, c){
   if (!await ask('과정을 지울까요?', `〈${c.name}〉의 질문·출석 기록이 모두 사라집니다.\n되살릴 수 없습니다.`, '삭제', true)) return;
   try{
     if (id === activeSid) await update(ref(db,'config'), { sessionId: null, lastEnded: null });
-    for (const k of ['msg','attend','presence','notice','blocked','quizHit','gate','stats','secret','live','quiz']){
+    else if ((cfg.lastEnded || {}).sid === id) await update(ref(db,'config'), { lastEnded: null });
+    for (const k of ['msg','attend','presence','notice','blocked','quizHit','gate','stats','secret','live','quiz','teachNote']){
       const r = await wipe(`${k}/${id}`);
       if (r !== true) throw r;
     }
