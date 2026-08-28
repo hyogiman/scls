@@ -33,7 +33,7 @@
   /* ── 상단 바 ── */
   header{
     flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;
-    gap:20px;padding:16px 26px;border-bottom:1px solid var(--line);
+    gap:20px;padding:18px 26px;border-bottom:1px solid var(--line);
     background:linear-gradient(180deg,#181D28,#141821);
   }
   .brand{display:flex;align-items:center;gap:14px;min-width:0}
@@ -41,13 +41,22 @@
   .live.off{background:#C05B4A!important;animation:none!important}
   .live.on{background:var(--ok);box-shadow:0 0 0 0 rgba(95,191,155,.55);animation:pulse 2.4s infinite}
   @keyframes pulse{70%{box-shadow:0 0 0 12px rgba(95,191,155,0)}100%{box-shadow:0 0 0 0 rgba(95,191,155,0)}}
-  .brand h1{font-size:22px;font-weight:700;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.18em;color:var(--muted);text-transform:uppercase;display:block;margin-bottom:3px}
+  .brand h1{font-size:31px;font-weight:800;letter-spacing:-.03em;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .eyebrow{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;color:var(--dim,#5D6779);text-transform:uppercase;display:block;margin-bottom:5px}
 
-  .meters{display:flex;align-items:center;gap:26px;flex:0 0 auto}
-  .meter{text-align:right;line-height:1.1}
-  .meter b{display:block;font-family:var(--mono);font-size:26px;font-weight:600;font-variant-numeric:tabular-nums}
-  .meter span{font-size:11px;color:var(--muted);letter-spacing:.05em}
+  /* 숫자 상자 — 글자 크기를 바꿔도 흔들리지 않도록 고정 치수로 둔다.
+     자릿수가 늘어도 폭이 안 튀게 min-width와 등폭 숫자를 쓴다. */
+  .meters{display:flex;align-items:center;gap:10px;flex:0 0 auto}
+  .meter{
+    display:inline-flex;align-items:baseline;gap:10px;
+    background:#1B2029;border:1px solid #2B3242;border-radius:9px;padding:8px 15px;
+  }
+  .meter span{font-size:12.5px;color:var(--muted);font-weight:600;letter-spacing:.02em}
+  .meter b{
+    font-family:var(--mono);font-size:21px;font-weight:600;line-height:1;
+    font-variant-numeric:tabular-nums;min-width:2.2ch;text-align:right;
+  }
+  .meter.q{background:#231F16;border-color:rgba(242,193,78,.34)}
   .meter.q b{color:var(--badge)}
 
   .zoom{display:flex;gap:6px;margin-left:6px}
@@ -119,6 +128,39 @@
   }
   #flash.on{transform:translateX(-50%) translateY(0)}
 
+  /* 돌발퀴즈 — 강사 전용 화면에만 뜨는 조작판 */
+  #qzBtn{
+    position:fixed;right:26px;bottom:24px;z-index:30;
+    background:var(--badge);color:#20242E;font-weight:800;font-size:15px;
+    border:none;border-radius:10px;padding:13px 20px;cursor:pointer;
+    box-shadow:0 10px 26px -10px rgba(0,0,0,.8);
+  }
+  #qzBtn.live{background:#E0574A;color:#fff}
+  #qzPanel{
+    position:fixed;right:26px;bottom:78px;z-index:30;width:360px;max-width:calc(100vw - 52px);
+    background:#1A1F2A;border:1px solid #2E3644;border-radius:12px;padding:18px;
+    display:none;box-shadow:0 22px 50px -18px rgba(0,0,0,.9);
+  }
+  #qzPanel.on{display:block}
+  #qzPanel h3{font-size:14px;font-weight:700;margin-bottom:4px}
+  #qzPanel .d{font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:13px}
+  #qzPanel input[type=text]{width:100%;padding:12px 13px;background:#12161E;border:1px solid #2E3644;border-radius:9px;
+    color:var(--ink);font-family:var(--sans);font-size:15px;outline:none}
+  #qzPanel input[type=text]:focus{border-color:var(--badge)}
+  .qzmode{display:flex;gap:7px;margin:11px 0 14px}
+  .qzmode button{flex:1;padding:9px;border:1px solid #2E3644;background:transparent;color:var(--muted);
+    border-radius:8px;font-size:12.5px;cursor:pointer;font-family:var(--sans)}
+  .qzmode button.on{background:var(--badge);color:#20242E;border-color:var(--badge);font-weight:700}
+  #qzGo{width:100%;padding:13px;border:none;border-radius:9px;background:var(--ok);color:#0E1A16;
+    font-weight:800;font-size:15px;cursor:pointer;font-family:var(--sans)}
+  #qzGo.stop{background:#E0574A;color:#fff}
+  #qzHits{margin-top:14px;max-height:230px;overflow-y:auto}
+  #qzHits .hd{font-size:11.5px;color:var(--muted);margin-bottom:9px;font-family:var(--mono);letter-spacing:.1em}
+  #qzHits .hit{display:inline-flex;align-items:baseline;gap:8px;background:var(--c,var(--badge));color:#161A22;
+    border-radius:3px;padding:5px 11px;margin:0 6px 6px 0;font-size:13px;font-weight:700}
+  #qzHits .hit i{font-style:normal;font-family:var(--mono);font-size:10.5px;opacity:.6}
+  #qzErr{color:#E0574A;font-size:12px;margin-top:9px;min-height:1px;line-height:1.5}
+
   @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -133,8 +175,8 @@
     </div>
   </div>
   <div class="meters">
-    <div class="meter"><b id="mAll">0</b><span>출석</span></div>
-    <div class="meter q"><b id="mQ">0</b><span>질문</span></div>
+    <div class="meter"><span>출석</span><b id="mAll">0</b></div>
+    <div class="meter q"><span>질문</span><b id="mQ">0</b></div>
     <div class="zoom">
       <button id="zOut" title="글자 작게" aria-label="글자 작게">A−</button>
       <button id="zIn" title="글자 크게" aria-label="글자 크게">A＋</button>
@@ -144,6 +186,21 @@
 </header>
 
 <div id="flash">질문이 등록되었습니다</div>
+
+<button id="qzBtn">돌발퀴즈</button>
+<div id="qzPanel">
+  <h3>돌발퀴즈</h3>
+  <div class="d">문제는 말로 내고, 여기엔 정답만 넣으세요. 여러 개면 쉼표로 구분합니다.
+참가자에게는 정답이 전달되지 않고, 이 화면이 판정합니다.</div>
+  <input type="text" id="qzAns" placeholder="예: 안전, safety, 세이프티" maxlength="120" autocomplete="off" />
+  <div class="qzmode">
+    <button id="qzContains" class="on">포함되면 정답</button>
+    <button id="qzExact">정확히 일치</button>
+  </div>
+  <button id="qzGo">시작</button>
+  <div id="qzErr"></div>
+  <div id="qzHits"></div>
+</div>
 
 <div class="wrap">
   <main id="scroller"><div id="board"></div></main>
@@ -165,8 +222,8 @@ const firebaseConfig = {
 };
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getDatabase, goOffline, goOnline, ref, onValue, query, orderByChild, limitToLast,
+import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getDatabase, goOffline, goOnline, ref, set, update, get, onValue, query, orderByChild, limitToLast,
          onChildAdded, onChildChanged, onChildRemoved } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 const app  = initializeApp(firebaseConfig);
@@ -178,6 +235,7 @@ const board = $('#board'), scroller = $('#scroller'), note = $('#note');
 const cards = new Map();          // 메시지키 → DOM 요소
 const syncCount = () => document.querySelector('#mQ').textContent = String(cards.size);
 let sid, attached = null, offs = [];   // 현재 세션 / 실제로 리스너를 건 세션
+let quiz = { on:false }, quizMode = 'contains', quizHits = {}, judged = new Set();
 let clearAt = 0, primeUntil = 0;       // 화면 정리 기준 시각 / 첫 로딩 알림 억제
 let order = new Map();                 // 사번 → 입장 순번 (색 배정 기준)
 
@@ -260,7 +318,7 @@ function paint(node, m){
 }
 
 function addCard(key, m){
-  if (m.hide || (m.ts || 0) <= clearAt) return;
+  if (m.hide || m.quizRound || (m.ts || 0) <= clearAt) return;   // 퀴즈 답안은 질문이 아니다
   const node = el('article','q');
   node.dataset.ts = m.ts || 0;
   node.dataset.no = m.empNo || '';
@@ -325,12 +383,13 @@ function attach(newSid, ended){
     return;
   }
   if (attached === sid) return;
-  attached = sid; clearAt = 0; order = new Map(); primeUntil = Date.now() + 2000;   // 첫 로딩 때는 알림 억제
+  attached = sid; clearAt = 0; order = new Map(); primeUntil = Date.now() + 2000;
+  quiz = { on:false }; quizHits = {}; judged = new Set(); paintQuiz();   // 첫 로딩 때는 알림 억제
   $('#live').classList.add('on');
   showNote('질문을 기다리는 중입니다','참가자가 질문을 보내면 이 화면에 바로 올라옵니다.');
 
   const qRef = query(ref(db, `msg/${sid}`), orderByChild('ts'), limitToLast(200));
-  offs.push(onChildAdded(qRef, s => addCard(s.key, s.val())));
+  offs.push(onChildAdded(qRef, s => { judge(s.key, s.val()); addCard(s.key, s.val()); }));
   offs.push(onChildChanged(qRef, s => {
     const m = s.val(), n = cards.get(s.key);
     if (m.hide){ dropCard(s.key); return; }
@@ -349,10 +408,100 @@ function attach(newSid, ended){
     repaintColors();
   }));
   offs.push(onValue(ref(db, `sessions/${sid}/screenClearAt`), s => applyClear(s.val() || 0)));
+  offs.push(onValue(ref(db, `quiz/${sid}`), s => { quiz = s.val() || { on:false }; paintQuiz(); }));
+  offs.push(onValue(ref(db, `quizHit/${sid}`), s => { quizHits = s.val() || {}; paintHits(); }));
+}
+
+/* ══════════ 돌발퀴즈 ══════════
+   정답은 이 화면과 데이터베이스에만 있고 참가자에게는 내려가지 않는다.
+   들어온 답을 판정하는 것도 이 화면이 한다. */
+const norm = t => String(t||'').toLowerCase().replace(/\s+/g,'');
+
+function judge(key, m){
+  if (!quiz.on || !m || m.quizRound !== quiz.round) return;
+  if (judged.has(m.empNo)) return;
+  if ((quizHits[quiz.round] || {})[m.empNo]) { judged.add(m.empNo); return; }
+  const got = norm(m.text);
+  const list = (quiz.answers || []).map(norm).filter(Boolean);
+  const hit = list.some(a => quiz.mode === 'exact' ? got === a : got.includes(a));
+  if (!hit) return;
+  judged.add(m.empNo);
+  set(ref(db, `quizHit/${sid}/${quiz.round}/${m.empNo}`), {
+    name: m.name || '', position: m.position || '', dept: m.dept || '',
+    text: m.text || '', at: Date.now(), quizAnswer: (quiz.answers || []).join(', ')
+  }).catch(() => judged.delete(m.empNo));
+}
+
+const qzPanel = $('#qzPanel'), qzBtn = $('#qzBtn');
+$('#qzContains').onclick = () => { quizMode = 'contains'; paintMode(); };
+$('#qzExact').onclick    = () => { quizMode = 'exact';    paintMode(); };
+function paintMode(){
+  $('#qzContains').classList.toggle('on', quizMode === 'contains');
+  $('#qzExact').classList.toggle('on', quizMode === 'exact');
+}
+qzBtn.onclick = () => {
+  if (quiz.on){ stopQuiz(); return; }
+  qzPanel.classList.toggle('on');
+  if (qzPanel.classList.contains('on')) setTimeout(() => $('#qzAns').focus(), 60);
+};
+$('#qzAns').addEventListener('keydown', e => { if (e.key === 'Enter') $('#qzGo').click(); });
+
+$('#qzGo').onclick = async () => {
+  if (quiz.on){ stopQuiz(); return; }
+  const raw = $('#qzAns').value.trim();
+  const answers = raw.split(',').map(x => x.trim()).filter(Boolean);
+  if (!answers.length){ $('#qzErr').textContent = '정답을 입력하세요.'; return; }
+  const shortest = Math.min(...answers.map(a => norm(a).length));
+  if (quizMode === 'contains' && shortest <= 1){
+    $('#qzErr').textContent = '정답이 한 글자면 다른 답에도 섞여 들어갑니다. ‘정확히 일치’로 바꾸거나 답을 늘려 주세요.';
+    return;
+  }
+  $('#qzErr').textContent = '';
+  const round = (quiz.round || 0) + 1;
+  judged = new Set();
+  try{
+    await set(ref(db, `quiz/${sid}`), { on:true, answers, mode:quizMode, round, startedAt: Date.now() });
+    await set(ref(db, `live/${sid}`), { quizOn:true, quizRound:round });
+  } catch(e){ $('#qzErr').textContent = '시작하지 못했습니다. (' + (e.code||e.message) + ')'; }
+};
+async function stopQuiz(){
+  try{
+    await update(ref(db, `quiz/${sid}`), { on:false });
+    await update(ref(db, `live/${sid}`), { quizOn:false });
+  } catch(e){ $('#qzErr').textContent = '끄지 못했습니다. (' + (e.code||e.message) + ')'; }
+}
+function paintQuiz(){
+  const on = !!quiz.on;
+  qzBtn.textContent = on ? '문답모드 끄기' : '돌발퀴즈';
+  qzBtn.classList.toggle('live', on);
+  $('#qzGo').textContent = on ? '문답모드 끄기' : '시작';
+  $('#qzGo').classList.toggle('stop', on);
+  $('#qzAns').disabled = on;
+  if (on){
+    qzPanel.classList.add('on');
+    $('#qzAns').value = (quiz.answers || []).join(', ');
+    quizMode = quiz.mode || 'contains'; paintMode();
+  } else {
+    $('#qzAns').value = '';
+  }
+  paintHits();
+}
+function paintHits(){
+  const box = $('#qzHits'); box.innerHTML = '';
+  const r = quiz.round;
+  if (!r || !quiz.on) return;
+  const people = Object.entries(quizHits[r] || {}).sort((a,b)=>(a[1].at||0)-(b[1].at||0));
+  box.append(el('div','hd', `${r}회차 · 정답 ${people.length}명`));
+  people.forEach(([no, h], i) => {
+    const chip = el('span','hit');
+    chip.style.setProperty('--c', colorOf(no, false));
+    chip.append(document.createTextNode(h.name || '이름 없음'), el('i', null, String(i+1)));
+    box.append(chip);
+  });
 }
 
 /* ── 시작 ── */
-signInAnonymously(auth).then(() => {
+function start(){
   onValue(ref(db, '.info/connected'), s => { __net = s.val() === true; $('#live').classList.toggle('off', !__net); });
 
   onValue(ref(db, 'config'), s => {
@@ -362,8 +511,12 @@ signInAnonymously(auth).then(() => {
     document.title = nm + ' · 강사용';
     attach(c.sessionId || null, c.lastEnded || null);
   });
-}).catch(e => {
-  showNote('접속하지 못했습니다', 'Firebase 익명 로그인이 켜져 있는지 확인해 주세요. (' + (e.code || e.message) + ')');
+}
+let started = false;
+onAuthStateChanged(auth, u => {
+  if (!u){ signInAnonymously(auth).catch(e =>
+    showNote('접속하지 못했습니다', 'Firebase 익명 로그인이 켜져 있는지 확인해 주세요. (' + (e.code||e.message) + ')')); return; }
+  if (!started){ started = true; start(); }
 });
 </script>
 </body>

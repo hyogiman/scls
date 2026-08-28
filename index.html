@@ -76,10 +76,24 @@
   /* 대기실 */
   .now{margin-top:16px;background:var(--card);border:1px solid var(--line);border-radius:13px;padding:17px 19px;text-align:center}
   .now .eyebrow{display:block;margin-bottom:8px}
-  .now strong{font-size:18px;font-weight:700;letter-spacing:-.02em;line-height:1.4;display:block}
+  .now strong{font-size:18px;font-weight:700;letter-spacing:-.02em;line-height:1.5;display:block;white-space:pre-line}
   .now.empty strong{color:var(--muted);font-size:15.5px;font-weight:500}
   .sublink{display:flex;gap:16px;justify-content:center;margin-top:18px}
   .sublink button{font-size:13px;color:var(--muted);text-decoration:underline;text-underline-offset:3px}
+
+  .codebox{margin-top:14px}
+  .codebox label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin-bottom:6px}
+  .codebox input{width:100%;padding:14px;text-align:center;font-family:var(--mono);font-size:24px;
+    letter-spacing:.44em;text-indent:.44em;background:var(--card);border:1px solid var(--line);border-radius:11px;outline:none}
+  .codebox input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+
+  /* 돌발퀴즈 — 소통창이 잠시 답안지로 바뀐다 */
+  .quizbar{display:none;align-items:center;gap:10px;padding:11px 16px;background:#2A2417;color:#F0D89A;
+    font-size:13.5px;font-weight:600;border-bottom:1px solid #3A3220}
+  .quizbar.on{display:flex}
+  .quizbar i{font-style:normal;width:8px;height:8px;border-radius:50%;background:#F0C14E;animation:blink 1.1s infinite;flex:0 0 auto}
+  .quizbar.right{background:#123028;color:#7FD9B4;border-bottom-color:#1B463A}
+  .quizbar.right i{background:#5FBF9B;animation:none}
 
   /* ══ 채팅 ══ */
   #room{flex:1;display:none;flex-direction:column;min-height:0}
@@ -218,11 +232,14 @@
     <span class="eyebrow">현재 과정</span>
     <strong id="lPgm">—</strong>
   </div>
+  <div class="codebox" id="codeBox" style="display:none">
+    <label for="joinCode">입장코드</label>
+    <input id="joinCode" maxlength="4" placeholder="ABCD" autocomplete="off" autocapitalize="characters" />
+  </div>
   <button class="btn primary" id="doEnter" style="margin-top:16px" disabled>입장하기</button>
   <div class="err" id="e3"></div>
   <div class="sublink">
     <button id="lEdit">정보 고치기</button>
-    <button id="lOut">다른 사번으로</button>
   </div>
 </div>
 
@@ -236,6 +253,7 @@
     <span class="net" id="net"><i></i>다시 연결 중</span>
     <button id="out">나가기</button>
   </div>
+  <div class="quizbar" id="quizBar"><i></i><span id="quizMsg">돌발퀴즈 진행 중 — 정답을 적어 보내세요</span></div>
   <div id="list"></div>
   <div class="composer" id="comp">
     <div class="col">
@@ -243,11 +261,11 @@
         <button class="anontog" id="anonTog"><span class="sw"></span>익명으로 보내기</button>
         <span class="anonhint" id="anonHint">이름이 화면에 표시됩니다</span>
       </div>
-      <textarea id="txt" rows="1" placeholder="궁금한 점을 적어 주세요" maxlength="1000"></textarea>
+      <textarea id="txt" rows="1" placeholder="소통창에 자유롭게 적어 주세요" maxlength="1000"></textarea>
     </div>
     <button class="send" id="send" disabled>보내기</button>
   </div>
-  <div class="closed" id="closedBar" style="display:none">지금은 질문을 받지 않습니다.</div>
+  <div class="closed" id="closedBar" style="display:none">소통창이 닫혔습니다.</div>
 </div>
 
 <!-- ══ 5. 종료 ══ -->
@@ -255,7 +273,7 @@
   <div class="seal">✓</div>
   <h2>수고하셨습니다</h2>
   <p class="pg" id="dPg">과정이 끝났습니다.</p>
-  <div class="cnt" id="dCnt"><b>0</b><span>남기신 질문</span></div>
+  <div class="cnt" id="dCnt"><b>0</b><span>남기신 글</span></div>
   <button class="btn primary" id="dAgain">처음으로</button>
 </div>
 
@@ -291,7 +309,7 @@ const firebaseConfig = {
 };
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getDatabase, ref, get, set, update, push, remove, onValue, onDisconnect, increment, goOffline, goOnline,
          query, orderByChild, limitToLast, onChildAdded, onChildChanged, onChildRemoved,
          serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
@@ -305,11 +323,13 @@ const el = (t,c,x) => { const n=document.createElement(t); if(c)n.className=c; i
 const hhmm = ts => { const d=new Date(ts||Date.now()); return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); };
 const digits = v => (v||'').replace(/[^0-9]/g,'');
 const NO_RE = /^[0-9]{6}$/;                 // 사번 6자리 숫자
+// 입장코드: 0 1 I O 를 뺀 대문자 32자
+const cleanCode = v => String(v||'').toUpperCase().replace(/[^23456789ABCDEFGHJKLMNPQRSTUVWXYZ]/g,'').slice(0,4);
 
 let me = null, sid = null, cfg = {}, offs = [], nodes = new Map();
 let inRoom = false, presRef = null, myQ = 0, qWatch = null;
-let netUp = false, sending = false, wakeT = null;
-let anon = false, lastNotice = null;
+let netUp = false, sending = false, wakeT = null, seenAttend = false;
+let anon = false, lastNotice = null, hitWatch = null, solved = false, live = {};
 
 /* ══ 연결 관리 ══
    RTDB는 소켓이 죽어도 쓰기가 «실패»하지 않고 그냥 끝나지 않는다.
@@ -340,6 +360,7 @@ function ask(title, body, yes='확인'){
   });
 }
 const show = id => ['gate','reg','lobby'].forEach(s => $('#'+s).classList.toggle('on', s===id));
+const pgmLabel = () => (cfg.programName || '진행 중인 과정') + (cfg.teacher ? ' · ' + cfg.teacher : '');
 
 /* ══ 1. 로그인 ══ */
 $('#empNo').addEventListener('input', e => { e.target.value = digits(e.target.value).slice(0,6); });
@@ -401,7 +422,8 @@ function toLobby(){
 }
 function paintLobby(){
   const has = !!sid;
-  $('#lPgm').textContent = has ? (cfg.programName || '이름 없는 과정') : '현재 열린 과정이 없습니다.';
+  $('#codeBox').style.display = (has && cfg.codeOn) ? '' : 'none';
+  $('#lPgm').textContent = has ? ((cfg.programName || '이름 없는 과정') + (cfg.teacher ? '\n강사 ' + cfg.teacher : '')) : '현재 열린 과정이 없습니다.';
   $('#lNow').classList.toggle('empty', !has);
   $('#doEnter').disabled = !has;
 }
@@ -410,7 +432,8 @@ $('#lEdit').onclick = () => {
   $('#rPos').value = me.position; $('#rDept').value = me.dept;
   $('#e2').textContent = ''; show('reg');
 };
-$('#lOut').onclick = () => { me = null; $('#empNo').value=''; $('#e1').textContent=''; show('gate'); };
+$('#joinCode').addEventListener('input', e => { e.target.value = cleanCode(e.target.value); });
+$('#joinCode').addEventListener('keydown', e => { if (e.key === 'Enter') $('#doEnter').click(); });
 $('#doEnter').onclick = () => joinRoom();
 
 /* ══ 출석·접속 등록 ══ */
@@ -421,7 +444,7 @@ async function registerAttend(){
   const snap = await get(ref(db, `attend/${sid}/${me.empNo}/joinedAt`));
   if (!snap.exists()){
     await set(ref(db, `attend/${sid}/${me.empNo}/joinedAt`), serverTimestamp());
-    await update(ref(db, `sessions/${sid}`), { pplTotal: increment(1) });
+    await update(ref(db, `stats/${sid}`), { ppl: increment(1) });
   }
   presRef = ref(db, `presence/${sid}/${me.empNo}`);
   onDisconnect(presRef).remove();
@@ -431,20 +454,47 @@ async function registerAttend(){
 /* ══ 4. 입장 ══ */
 async function joinRoom(){
   if (!sid){ $('#e3').textContent = '아직 열린 과정이 없습니다.'; return; }
-  $('#doEnter').disabled = true;
+  $('#doEnter').disabled = true; $('#e3').textContent = '';
+  try{
+    const b = await get(ref(db, `blocked/${sid}/${me.empNo}`));
+    if (b.exists()){
+      $('#e3').textContent = '이 과정에는 입장할 수 없습니다. 운영 담당자에게 문의해 주세요.';
+      $('#doEnter').disabled = false; return;
+    }
+  } catch {}
+  // 코드는 이 화면이 아니라 서버 규칙이 판정한다.
+  // 코드 값은 내려오지 않고, 맞을 때만 gate 쓰기가 통과한다.
+  const typed = cfg.codeOn ? cleanCode($('#joinCode').value) : '';
+  if (cfg.codeOn && typed.length !== 4){
+    $('#e3').textContent = '입장코드 4자리를 입력해 주세요.'; $('#doEnter').disabled = false; return;
+  }
+  try{
+    await set(ref(db, `gate/${sid}/${auth.currentUser.uid}`), typed);
+  } catch(e){
+    $('#e3').textContent = (e.code === 'PERMISSION_DENIED')
+      ? '입장코드가 맞지 않습니다.'
+      : '입장하지 못했습니다. (' + (e.code || e.message) + ')';
+    $('#doEnter').disabled = false; return;
+  }
   try{ await registerAttend(); }
   catch(err){ $('#e3').textContent = '입장하지 못했습니다. (' + (err.code||err.message) + ')'; $('#doEnter').disabled = false; return; }
   inRoom = true;
 
   if (qWatch) qWatch();
-  qWatch = onValue(ref(db, `attend/${sid}/${me.empNo}/qCount`), s => { myQ = s.val() || 0; });
+  seenAttend = false;
+  qWatch = onValue(ref(db, `attend/${sid}/${me.empNo}`), s => {
+    if (s.exists()){ seenAttend = true; myQ = (s.val() || {}).qCount || 0; return; }
+    // 한 번이라도 명단에 있었던 뒤에 사라진 것만 «내보냄»으로 본다.
+    // 입장 직후 아직 반영되지 않은 찰나를 강퇴로 오판하면 스스로 튕겨나간다.
+    if (seenAttend && inRoom) kickedOut();
+  });
 
   show(null);
   $('#done').classList.remove('on');
   $('#room').classList.add('on');
   $('#meName').textContent = me.name;
   $('#meAff').textContent  = [me.position, me.dept].filter(Boolean).join(' · ');
-  $('#rPgm').textContent   = cfg.programName || '진행 중인 과정';
+  $('#rPgm').textContent   = pgmLabel();
   applyOpen(); listen();
   const draft = localStorage.getItem('qa_draft_' + sid);
   if (draft && !txt.value){ txt.value = draft; grow(); }   // 못 보낸 글이 있으면 되살린다
@@ -453,7 +503,7 @@ async function joinRoom(){
 
 /* ══ 퇴장 ══ */
 async function leaveRoom(){
-  offs.forEach(f=>f()); offs = []; nodes.clear();
+  offs.forEach(f=>f()); offs = []; nodes.clear(); live = {};
   if (qWatch){ qWatch(); qWatch = null; }
   inRoom = false;
   if (presRef){
@@ -471,7 +521,16 @@ async function endedOut(endedName, nextOpen){
   $('#dAgain').textContent = nextOpen ? '다음 과정 입장하기' : '처음으로';
   $('#done').classList.add('on');
 }
+async function kickedOut(){
+  await leaveRoom();
+  $('#room').classList.remove('on'); show(null);
+  $('#dPg').textContent = '운영 담당자가 참가자 명단에서 내보냈습니다.\n문의는 담당자에게 해 주세요.';
+  $('#dCnt').style.display = 'none';
+  $('#dAgain').textContent = '대기실로';
+  $('#done').classList.add('on');
+}
 $('#dAgain').onclick = () => {
+  $('#dCnt').style.display = '';
   $('#done').classList.remove('on');
   if (me) toLobby();
   else { const s = localStorage.getItem('qa_empNo'); if (s) $('#empNo').value = s; show('gate'); }
@@ -487,13 +546,14 @@ $('#out').onclick = async () => {
 function listen(){
   offs.forEach(f=>f()); offs = []; nodes.clear();
   const list = $('#list'); list.innerHTML = '';
-  const holder = el('div','sys','아직 올라온 질문이 없습니다.\n첫 질문을 남겨 보세요.');
+  const holder = el('div','sys','아직 올라온 글이 없습니다.\n첫 글을 남겨 보세요.');
   list.append(holder);
 
   const qRef = query(ref(db, `msg/${sid}`), orderByChild('ts'), limitToLast(200));
   const draw = (key, m) => {
     if (m.hide) return;
     const mine = m.empNo === me.empNo;
+    if (m.quizRound && !mine) return;              // 남의 답은 보이지 않는다
     const n = el('div','msg' + (mine?' mine':'') + (m.anon?' anon':''));
     n.append(el('div','from'), el('div','bub'), el('div','at'));
     n.querySelector('.from').append(
@@ -518,6 +578,7 @@ function listen(){
   offs.push(onChildRemoved(qRef, s => { const n=nodes.get(s.key); if(n){n.remove(); nodes.delete(s.key);} }));
 
   // 공지 — 노드 전체를 받아 가장 최근 것을 고른다 (색인에 기대지 않음)
+  offs.push(onValue(ref(db, `live/${sid}`), s => { live = s.val() || {}; paintQuiz(); }));
   offs.push(onValue(ref(db, `notice/${sid}`), s => {
     const obj = s.val() || {};
     const keys = Object.keys(obj);
@@ -565,14 +626,18 @@ sendBtn.onclick = async () => {
   txt.value = ''; grow(); setSending(true);
 
   // 보내기는 한 번만. 시한이 지나도 다시 밀어넣지 않는다 — 나중에 도착하면 같은 글이 두 번 올라가므로.
-  const p = push(ref(db, `msg/${sid}`), {
+  const inQuiz = !!live.quizOn && !!live.quizRound;
+  const payload = {
     empNo: me.empNo, name: me.name, position: me.position, dept: me.dept,
-    text: body, ts: serverTimestamp(), done: false, hide: false, anon: !!useAnon
-  });
-  p.then(() => {                                   // 집계는 늦게 붙어도 되니 따로 처리
+    text: body, ts: serverTimestamp(), done: false, hide: false, anon: inQuiz ? false : !!useAnon
+  };
+  if (inQuiz) payload.quizRound = live.quizRound;   // 퀴즈 답안 표시
+  const p = push(ref(db, `msg/${sid}`), payload);
+  p.then(() => {
     localStorage.removeItem(draftKey());
+    if (inQuiz) return;                            // 퀴즈 답안은 참여도 집계에 넣지 않는다
     update(ref(db, `attend/${sid}/${me.empNo}`), { qCount: increment(1) }).catch(()=>{});
-    update(ref(db, `sessions/${sid}`), { qTotal: increment(1) }).catch(()=>{});
+    update(ref(db, `stats/${sid}`), { q: increment(1) }).catch(()=>{});
   }).catch(()=>{});
 
   localStorage.setItem(draftKey(), body);          // 확인되기 전까지 기기에 남겨 둔다
@@ -597,11 +662,34 @@ function applyOpen(){
   const open = cfg.chatOpen !== false;
   $('#comp').style.display = open ? 'flex' : 'none';
   $('#closedBar').style.display = open ? 'none' : 'block';
-  paintAnon();
+  paintAnon(); paintQuiz();
+}
+
+/* ══ 돌발퀴즈 ══
+   정답은 이 화면에 내려오지 않는다. 맞았는지는 강사 화면이 판정해 알려준다. */
+function paintQuiz(){
+  const on = !!live.quizOn && inRoom;
+  $('#quizBar').classList.toggle('on', on);
+  $('#quizBar').classList.toggle('right', on && solved);
+  $('#quizMsg').textContent = solved ? '정답입니다! 잘하셨어요' : '돌발퀴즈 진행 중 — 정답을 적어 보내세요';
+  txt.placeholder = on ? '정답을 입력하세요' : '소통창에 자유롭게 적어 주세요';
+  $('#anonRow').classList.toggle('on', !on && cfg.anonAllowed !== false);
+  watchHit();
+}
+function watchHit(){
+  const r = live.quizRound;
+  if (hitWatch){ hitWatch(); hitWatch = null; }
+  solved = false;
+  if (!live.quizOn || !r || !sid || !me) return;
+  hitWatch = onValue(ref(db, `quizHit/${sid}/${r}/${me.empNo}`), s => {
+    solved = s.exists();
+    $('#quizBar').classList.toggle('right', solved);
+    $('#quizMsg').textContent = solved ? '정답입니다! 잘하셨어요' : '돌발퀴즈 진행 중 — 정답을 적어 보내세요';
+  });
 }
 
 /* ══ 시작 ══ */
-signInAnonymously(auth).then(() => {
+function start(){
   onValue(ref(db, '.info/connected'), s => {
     netUp = s.val() === true;
     paintNet();
@@ -611,8 +699,8 @@ signInAnonymously(auth).then(() => {
   onValue(ref(db, 'config'), async s => {
     cfg = s.val() || {};
     const nm = cfg.programName || '이름 없는 과정';
-    $('#gPgm').textContent = sid ? nm : '교육 질의응답';
-    $('#rPgm').textContent = nm;
+    $('#gPgm').textContent = sid ? nm : '교육 소통창';
+    $('#rPgm').textContent = pgmLabel();
     document.title = nm;
     applyOpen();
 
@@ -626,13 +714,18 @@ signInAnonymously(auth).then(() => {
       await endedOut(ended.name || null, !!newSid);
       return;
     }
-    if (!inRoom && !$('#done').classList.contains('on')) paintLobby();
+    if (me) paintLobby();   // 대기실은 숨어 있어도 최신 상태로 둔다
   });
 
   const saved = localStorage.getItem('qa_empNo');
   if (saved) $('#empNo').value = saved;
-}).catch(e => {
-  $('#e1').textContent = '접속하지 못했습니다. (' + (e.code||e.message) + ')';
+}
+
+// 관리자가 같은 브라우저에서 admin을 열어 뒀을 수 있으므로, 이미 로그인돼 있으면 그대로 쓴다
+let started = false;
+onAuthStateChanged(auth, u => {
+  if (!u){ signInAnonymously(auth).catch(e => { $('#e1').textContent = '접속하지 못했습니다. (' + (e.code||e.message) + ')'; }); return; }
+  if (!started){ started = true; start(); }
 });
 </script>
 </body>
