@@ -383,12 +383,22 @@ const ADMIN_PW = "1234";   // 관리자 비밀번호
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getDatabase, ref, set, update, push, remove, onValue,
+import { getDatabase, goOffline, goOnline, ref, set, update, push, remove, onValue,
          query, orderByChild, limitToLast, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getDatabase(app);
+
+/* 화면이 절전에서 깨어나면 소켓이 죽어 있을 수 있다.
+   RTDB는 그 상태에서 조용히 멈추므로 직접 다시 붙인다. */
+let __net = false, __wakeT = null;
+const forceReconnect = () => { try { goOffline(db); goOnline(db); } catch {} };
+const wake = () => { clearTimeout(__wakeT); __wakeT = setTimeout(() => { if (!__net) forceReconnect(); }, 1200); };
+document.addEventListener('visibilitychange', () => { if (!document.hidden) wake(); });
+window.addEventListener('pageshow', e => { if (e.persisted) forceReconnect(); else wake(); });
+window.addEventListener('focus', wake);
+window.addEventListener('online', forceReconnect);
 
 const $  = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
@@ -463,6 +473,12 @@ $$('.chip[data-df]').forEach(c => c.onclick = () => {
 /* ══ 시작 ══ */
 function boot(){
   signInAnonymously(auth).then(() => {
+    onValue(ref(db,'.info/connected'), s => {
+      __net = s.val() === true;
+      $('#tState').classList.toggle('down', !__net);
+      if (!__net) $('#tState').textContent = '연결 끊김';
+      else applyConfig();
+    });
     onValue(ref(db,'config'),   s => { cfg = s.val()||{};     applyConfig(); });
     onValue(ref(db,'sessions'), s => { courses = s.val()||{}; applyConfig(); renderCourses(); });
     setInterval(drawElapsed, 20000);

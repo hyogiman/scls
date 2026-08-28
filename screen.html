@@ -38,6 +38,7 @@
   }
   .brand{display:flex;align-items:center;gap:14px;min-width:0}
   .live{width:9px;height:9px;border-radius:50%;background:#4A5468;flex:0 0 auto}
+  .live.off{background:#C05B4A!important;animation:none!important}
   .live.on{background:var(--ok);box-shadow:0 0 0 0 rgba(95,191,155,.55);animation:pulse 2.4s infinite}
   @keyframes pulse{70%{box-shadow:0 0 0 12px rgba(95,191,155,0)}100%{box-shadow:0 0 0 0 rgba(95,191,155,0)}}
   .brand h1{font-size:22px;font-weight:700;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -154,7 +155,7 @@ const firebaseConfig = {
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getDatabase, ref, onValue, query, orderByChild, limitToLast,
+import { getDatabase, goOffline, goOnline, ref, onValue, query, orderByChild, limitToLast,
          onChildAdded, onChildChanged, onChildRemoved } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 const app  = initializeApp(firebaseConfig);
@@ -341,6 +342,8 @@ function attach(newSid, ended){
 
 /* ── 시작 ── */
 signInAnonymously(auth).then(() => {
+  onValue(ref(db, '.info/connected'), s => { __net = s.val() === true; $('#live').classList.toggle('off', !__net); });
+
   onValue(ref(db, 'config'), s => {
     const c = s.val() || {};
     const nm = c.programName || '이름 없는 과정';
