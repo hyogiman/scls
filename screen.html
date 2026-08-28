@@ -48,21 +48,19 @@
      자릿수가 늘어도 폭이 안 튀게 min-width와 등폭 숫자를 쓴다. */
   /* 상자 두 개를 따로 두면 글꼴·자릿수에 따라 서로 다르게 보인다.
      한 틀 안에 칸을 나눠 두 칸의 치수를 못 어긋나게 못박는다. */
+  /* 라벨과 숫자를 «한 줄상자» 안에 같은 크기로 넣는다.
+     크기가 다른 두 요소를 세로로 맞추려 하면 글꼴 지표에 따라 결과가 갈리므로,
+     애초에 크기를 같게 두어 어긋날 여지를 없앤다. 구분은 굵기와 색으로만 한다. */
   .meters{display:flex;align-items:center;gap:12px;flex:0 0 auto}
   .gauge{display:flex;align-items:stretch;flex:0 0 auto;
     background:#1B2029;border:1px solid #2B3242;border-radius:10px;overflow:hidden}
-  /* 바깥 칸은 세로 가운데만 잡고, 안쪽 줄에서 라벨과 숫자의 «기준선»을 맞춘다.
-     한 단계에서 둘 다 하려고 하면 13px 한글과 22px 숫자가 서로 다른 높이에 앉는다. */
-  .cell{flex:0 0 auto;box-sizing:border-box;display:flex;align-items:center;
-    height:48px;padding:0 16px;min-width:120px}
+  .cell{flex:0 0 auto;box-sizing:border-box;display:flex;align-items:center;justify-content:center;
+    height:48px;padding:0 18px;min-width:124px}
   .cell + .cell{border-left:1px solid #2B3242}
-  .cell .in{display:flex;align-items:baseline;justify-content:space-between;
-    gap:12px;width:100%;line-height:1}
-  .cell .lb{flex:0 0 auto;font-size:13px;font-weight:600;color:var(--muted);
-    letter-spacing:.02em;line-height:1}
-  .cell .vl{flex:0 0 auto;font-family:var(--mono);font-size:22px;font-weight:600;
-    line-height:1;font-variant-numeric:tabular-nums;min-width:2.4ch;text-align:right}
-  .cell.q{background:#231F16}
+  .cell .in{font-size:20px;line-height:1.25;white-space:nowrap;
+    color:var(--muted);font-weight:600;letter-spacing:-.01em}
+  .cell .vl{font-family:var(--mono);font-weight:600;font-variant-numeric:tabular-nums;
+    color:var(--ink);margin-left:12px}
   .cell.q .vl{color:var(--badge)}
 
   .zoom{display:flex;gap:6px;margin-left:6px}
@@ -222,8 +220,8 @@
   </div>
   <div class="meters">
     <div class="gauge">
-      <div class="cell"><div class="in"><span class="lb">출석</span><b class="vl" id="mAll">0</b></div></div>
-      <div class="cell q"><div class="in"><span class="lb">질문</span><b class="vl" id="mQ">0</b></div></div>
+      <div class="cell"><span class="in">출석<b class="vl" id="mAll">0</b></span></div>
+      <div class="cell q"><span class="in">질문<b class="vl" id="mQ">0</b></span></div>
     </div>
     <div class="zoom">
       <button id="zOut" title="글자 작게" aria-label="글자 작게">A−</button>
