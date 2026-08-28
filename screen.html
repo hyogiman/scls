@@ -171,7 +171,7 @@
     border:none;border-radius:10px;padding:13px 20px;cursor:pointer;
     box-shadow:0 10px 26px -10px rgba(0,0,0,.8);
   }
-  #qzBtn.live{background:#E0574A;color:#fff}
+  #qzBtn.qon{background:#E0574A;color:#fff}
   #qzPanel{
     position:fixed;right:26px;bottom:78px;z-index:30;width:360px;max-width:calc(100vw - 52px);
     background:#1A1F2A;border:1px solid #2E3644;border-radius:12px;padding:18px;
@@ -555,7 +555,7 @@ async function stopQuiz(){
 function paintQuiz(){
   const on = !!quiz.on;
   qzBtn.textContent = on ? '문답모드 끄기' : '돌발퀴즈';
-  qzBtn.classList.toggle('live', on);
+  qzBtn.classList.toggle('qon', on);
   $('#qzGo').textContent = on ? '문답모드 끄기' : '시작';
   $('#qzGo').classList.toggle('stop', on);
   $('#qzAns').disabled = on;

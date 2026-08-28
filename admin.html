@@ -330,14 +330,6 @@
           <button class="btn ghost" id="qzOff" style="flex:0 0 auto">문답모드 강제 종료</button>
         </div>
       </div>
-      <div class="block">
-        <h3>정답자 기록</h3>
-        <p class="desc">회차별로 맞힌 순서대로 남습니다. 참여도 집계와는 따로 셉니다.</p>
-        <div class="inline" style="margin-bottom:12px">
-          <button class="btn ghost" id="qzCsv" style="flex:0 0 auto">정답자 내려받기 (CSV)</button>
-        </div>
-        <div id="qzList"></div>
-      </div>
     </div></div>
 
     <div id="idle">
@@ -393,6 +385,7 @@
       <div class="tabs" id="detTabs">
         <button class="on" data-p="dq">질문</button>
         <button data-p="dr">출석</button>
+        <button data-p="dz">퀴즈</button>
       </div>
       <div class="pane on" id="dq"><div class="inner">
         <div class="filters">
@@ -416,6 +409,16 @@
           </div>
         </div>
         <div class="tblwrap" id="drTable"></div>
+      </div></div>
+      <div class="pane" id="dz"><div class="inner">
+        <div class="block">
+          <h3>정답자 기록</h3>
+          <p class="desc">이 과정에서 진행한 돌발퀴즈의 회차별 정답자입니다. 맞힌 순서대로 남습니다.</p>
+          <div class="inline" style="margin-bottom:12px">
+            <button class="btn ghost" id="dzCsv" style="flex:0 0 auto">정답자 내려받기 (CSV)</button>
+          </div>
+          <div id="dzList"></div>
+        </div>
       </div></div>
     </div>
   </section>
@@ -492,9 +495,9 @@ const full = ts => { if(!ts) return '—'; const d=new Date(ts); return `${d.get
 const ALL = '__ALL__';
 
 let cfg = {}, courses = {}, secrets = {}, stats = {}, quizzes = {}, activeSid = null;
-let liveOff = [], liveSid = null, liveMsgs = {}, liveRoster = {}, liveOnline = {}, blocked = {}, quizHits = {};
+let liveOff = [], liveSid = null, liveMsgs = {}, liveRoster = {}, liveOnline = {}, blocked = {};
 let ntcTo = 'all', teachNote = null;
-let detOff  = [], detSid  = null, detMsgs  = {}, detRoster  = {}, allAttend = {};
+let detOff  = [], detSid  = null, detMsgs  = {}, detRoster  = {}, allAttend = {}, detQuizHits = {};
 let lFilter = 'all', dFilter = 'all';
 
 /* ══ 모달 · 토스트 ══ */
@@ -623,7 +626,7 @@ function applyConfig(){
   $('#liveStats').style.display = on ? 'grid' : 'none';
   $('#liveBar').style.display   = on ? 'flex' : 'none';
   $('#liveTabs').style.display  = on ? 'flex' : 'none';
-  ['lq','lr','ln'].forEach(id => $('#'+id).style.display = on ? '' : 'none');
+  ['lq','lr','ln','lz'].forEach(id => $('#'+id).style.display = on ? '' : 'none');
   $('#idle').classList.toggle('on', !on);
 
   const open = cfg.chatOpen !== false;
@@ -662,14 +665,13 @@ function drawElapsed(){
 function attachLive(){
   if (liveSid === activeSid) return;
   liveOff.forEach(f=>f()); liveOff=[];
-  liveSid = activeSid; liveMsgs={}; liveRoster={}; liveOnline={}; blocked={}; quizHits={}; teachNote=null; paintNtc();
+  liveSid = activeSid; liveMsgs={}; liveRoster={}; liveOnline={}; blocked={}; teachNote=null; paintNtc();
   drawLiveQ(); drawLiveRoster(); drawLiveStats(); drawNotices({});
   if (!liveSid) return;
   liveOff.push(onValue(query(ref(db,`msg/${liveSid}`), orderByChild('ts'), limitToLast(500)), s => { liveMsgs=s.val()||{}; drawLiveQ(); drawLiveStats(); }));
   liveOff.push(onValue(ref(db,`attend/${liveSid}`),   s => { liveRoster=s.val()||{}; drawLiveRoster(); drawLiveStats(); }));
   liveOff.push(onValue(ref(db,`presence/${liveSid}`), s => { liveOnline=s.val()||{}; drawLiveRoster(); drawLiveStats(); }));
   liveOff.push(onValue(ref(db,`blocked/${liveSid}`), s => { blocked = s.val()||{}; drawBlocked(); }));
-  liveOff.push(onValue(ref(db,`quizHit/${liveSid}`), s => { quizHits = s.val()||{}; drawQuiz(); }));
   liveOff.push(onValue(ref(db,`teachNote/${liveSid}`), s => { teachNote = s.val(); paintNtc(); }));
   liveOff.push(onValue(ref(db,`notice/${liveSid}`), s => drawNotices(s.val()||{})));
 }
@@ -1050,12 +1052,13 @@ $('#qzOff').onclick = async () => {
   catch(e){ return toast('끄지 못했습니다: ' + (e.code||e.message)); }
   toast('문답모드를 껐습니다');
 };
-function drawQuiz(){
-  const box = $('#qzList'); box.innerHTML = '';
-  const rounds = Object.keys(quizHits).sort((a,b)=>Number(b)-Number(a));
-  if (!rounds.length){ box.append(el('div','empty','아직 진행한 퀴즈가 없습니다.')); return; }
+/* 정답자 기록 — 회차별로 맞힌 순서대로 (기록 상세의 퀴즈 탭에서 본다) */
+function renderQuizRec(box, hits){
+  box.innerHTML = '';
+  const rounds = Object.keys(hits || {}).sort((a,b)=>Number(b)-Number(a));
+  if (!rounds.length){ box.append(el('div','empty','이 과정에서는 돌발퀴즈를 진행하지 않았습니다.')); return; }
   for (const r of rounds){
-    const people = Object.entries(quizHits[r]||{}).sort((a,b)=>(a[1].at||0)-(b[1].at||0));
+    const people = Object.entries(hits[r]||{}).sort((a,b)=>(a[1].at||0)-(b[1].at||0));
     const w = el('div','qzr');
     w.append(el('h5', null, r + '회차 · 정답자 ' + people.length + '명'));
     const meta = (people[0]||[,{}])[1].quizAnswer;
@@ -1072,10 +1075,10 @@ function drawQuiz(){
     w.append(ol); box.append(w);
   }
 }
-$('#qzCsv').onclick = () => {
+function quizCsv(hits, label){
   const rows = [];
-  for (const r of Object.keys(quizHits)){
-    Object.entries(quizHits[r]||{}).sort((a,b)=>(a[1].at||0)-(b[1].at||0))
+  for (const r of Object.keys(hits || {})){
+    Object.entries(hits[r]||{}).sort((a,b)=>(a[1].at||0)-(b[1].at||0))
       .forEach(([no,h],i) => rows.push([r, i+1, no, h.name||'', h.position||'', h.dept||'', full(h.at), h.text||'']));
   }
   if (!rows.length) return toast('내려받을 정답 기록이 없습니다');
@@ -1085,10 +1088,11 @@ $('#qzCsv').onclick = () => {
   const blob = new Blob(['\uFEFF' + lines.join('\r\n')], { type:'text/csv;charset=utf-8' });
   const a = el('a'); a.href = URL.createObjectURL(blob);
   const d = new Date();
-  a.download = `퀴즈정답자_${String((courses[liveSid]||{}).name||'과정').replace(/[\\/:*?"<>|]/g,'')}_${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}.csv`;
+  a.download = `퀴즈정답자_${String(label||'과정').replace(/[\\/:*?"<>|]/g,'')}_${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}.csv`;
   a.click(); URL.revokeObjectURL(a.href);
   toast('정답자 기록을 내려받았습니다');
-};
+}
+$('#dzCsv').onclick = () => quizCsv(detQuizHits, (courses[detSid]||{}).name);
 
 $('#toggleAnon').onclick = async () => {
   const ok = cfg.anonAllowed !== false;
@@ -1121,14 +1125,14 @@ function showDetail(on){
   $('#mDetail').style.display = on ? 'flex' : 'none';
 }
 function backToList(){
-  detOff.forEach(f=>f()); detOff=[]; detSid=null; detMsgs={}; detRoster={}; allAttend={};
+  detOff.forEach(f=>f()); detOff=[]; detSid=null; detMsgs={}; detRoster={}; allAttend={}; detQuizHits={};
   showDetail(false);
 }
 $('#backList').onclick = backToList;
 
 function openDetail(id){
   detOff.forEach(f=>f()); detOff=[];
-  detSid = id; detMsgs={}; detRoster={}; allAttend={};
+  detSid = id; detMsgs={}; detRoster={}; allAttend={}; detQuizHits={};
   const agg = id === ALL, c = courses[id] || {};
   $('#dTitle').textContent = agg ? '전체 과정 합산' : (c.name || '이름 없음');
   $('#dSub').textContent   = agg ? '모든 과정의 출석을 사번 기준으로 합쳤습니다'
@@ -1136,10 +1140,13 @@ function openDetail(id){
   $('#dCLbl').textContent  = agg ? '과정 수' : '누적 질문';
   $('#dAllLbl').textContent= agg ? '참여자(중복 제외)' : '출석 인원';
   $('#detTabs').style.display = agg ? 'none' : 'flex';
-  if (agg){ $('#dq').classList.remove('on'); $('#dr').classList.add('on'); }
-  else { $$('#detTabs button').forEach((b,i)=>b.classList.toggle('on', i===0)); $('#dq').classList.add('on'); $('#dr').classList.remove('on'); }
+  $$('#detTabs button').forEach((b,i) => {
+    const first = i === 0;
+    b.classList.toggle('on', !agg && first);
+    $('#'+b.dataset.p).classList.toggle('on', agg ? b.dataset.p === 'dr' : first);
+  });
   showDetail(true); setMode('mng');
-  drawDetQ(); drawDetRoster(); drawDetStats();
+  drawDetQ(); drawDetRoster(); drawDetStats(); renderQuizRec($('#dzList'), {});
 
   if (agg){
     detOff.push(onValue(ref(db,'attend'), s => { allAttend = s.val()||{}; drawDetRoster(); drawDetStats(); }));
@@ -1147,6 +1154,7 @@ function openDetail(id){
   }
   detOff.push(onValue(query(ref(db,`msg/${id}`), orderByChild('ts'), limitToLast(500)), s => { detMsgs=s.val()||{}; drawDetQ(); drawDetStats(); }));
   detOff.push(onValue(ref(db,`attend/${id}`), s => { detRoster=s.val()||{}; drawDetRoster(); drawDetStats(); }));
+  detOff.push(onValue(ref(db,`quizHit/${id}`), s => { detQuizHits = s.val()||{}; renderQuizRec($('#dzList'), detQuizHits); }));
 }
 $('#goAll').onclick = () => openDetail(ALL);
 

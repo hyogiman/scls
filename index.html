@@ -80,9 +80,16 @@
   .badge .no b{font-family:var(--mono);font-size:14px;font-weight:500;letter-spacing:.08em}
 
   /* 대기실 */
-  .now{margin-top:16px;background:var(--card);border:1px solid var(--line);border-radius:13px;padding:17px 19px;text-align:center}
-  .now .eyebrow{display:block;margin-bottom:8px}
-  .now strong{font-size:18px;font-weight:700;letter-spacing:-.02em;line-height:1.5;display:block;white-space:pre-line}
+  /* 명찰과 같은 카드 형식 — 라벨은 왼쪽 위, 과정명은 가운데 크게, 강사는 그보다 작게 */
+  .now{margin-top:14px;background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:18px 20px 20px;position:relative;overflow:hidden}
+  .now::before{content:'';position:absolute;left:0;right:0;top:0;height:5px;background:var(--accent)}
+  .now .eyebrow{display:block;text-align:left;margin-bottom:15px}
+  .now strong{display:block;text-align:center;font-size:26px;font-weight:700;
+    letter-spacing:-.03em;line-height:1.3}
+  .now .tc{display:block;text-align:center;margin-top:9px;font-size:14px;color:var(--muted);min-height:1px}
+  .now.empty::before{background:var(--line)}
+  .now.empty strong{font-size:16px;font-weight:500;color:var(--muted)}
   .now.empty strong{color:var(--muted);font-size:15.5px;font-weight:500}
   .sublink{display:flex;gap:16px;justify-content:center;margin-top:18px}
   .sublink button{font-size:13px;color:var(--muted);text-decoration:underline;text-underline-offset:3px}
@@ -238,6 +245,7 @@
   <div class="now" id="lNow">
     <span class="eyebrow">현재 과정</span>
     <strong id="lPgm">—</strong>
+    <span class="tc" id="lTeacher"></span>
   </div>
   <div class="codebox" id="codeBox" style="display:none">
     <label for="joinCode">입장코드</label>
@@ -487,7 +495,8 @@ function toLobby(){
 function paintLobby(){
   const has = !!sid;
   $('#codeBox').style.display = (has && cfg.codeOn) ? '' : 'none';
-  $('#lPgm').textContent = has ? ((cfg.programName || '이름 없는 과정') + (cfg.teacher ? '\n강사 ' + cfg.teacher : '')) : '현재 열린 과정이 없습니다.';
+  $('#lPgm').textContent = has ? (cfg.programName || '이름 없는 과정') : '현재 열린 과정이 없습니다.';
+  $('#lTeacher').textContent = (has && cfg.teacher) ? '강사 ' + cfg.teacher : '';
   $('#lNow').classList.toggle('empty', !has);
   $('#doEnter').disabled = !has;
 }
