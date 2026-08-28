@@ -154,7 +154,8 @@
   #done .cnt{margin-top:22px;padding:15px 26px;background:var(--card);border:1px solid var(--line);border-radius:13px}
   #done .cnt b{font-family:var(--mono);font-size:26px;font-weight:600;color:var(--badge);display:block}
   #done .cnt span{font-size:12px;color:var(--muted)}
-  #done .btn{max-width:280px;margin-top:26px}
+  #done .off{margin-top:18px;font-size:12.5px;color:#9AA1B0}
+  #done .btn{max-width:280px;margin-top:20px}
 
   /* ══ 모달 ══ */
   .veil{position:fixed;inset:0;background:rgba(26,30,43,.45);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;padding:22px;z-index:50}
@@ -280,6 +281,7 @@
   <h2>수고하셨습니다</h2>
   <p class="pg" id="dPg">과정이 끝났습니다.</p>
   <div class="cnt" id="dCnt"><b>0</b><span>남기신 글</span></div>
+  <p class="off">연결을 끊었습니다. 이제 창을 닫으셔도 됩니다.</p>
   <button class="btn primary" id="dAgain">처음으로</button>
 </div>
 
@@ -335,6 +337,7 @@ const cleanCode = v => String(v||'').toUpperCase().replace(/[^23456789ABCDEFGHJK
 let me = null, sid = null, cfg = {}, offs = [], nodes = new Map();
 let inRoom = false, presRef = null, myQ = 0, qWatch = null;
 let netUp = false, sending = false, wakeT = null, seenAttend = false;
+let parked = false, parkT = null;      // 일부러 연결을 끊어 둔 상태
 let anon = false, lastNotice = null, hitWatch = null, solved = false, live = {};
 
 /* ══ 화면 높이 ══
@@ -365,19 +368,45 @@ const scrollEnd = () => {
 /* ══ 연결 관리 ══
    RTDB는 소켓이 죽어도 쓰기가 «실패»하지 않고 그냥 끝나지 않는다.
    그래서 ①상태를 눈에 보이게 하고 ②돌아왔을 때 직접 다시 붙이고 ③전송에 시한을 둔다. */
-function paintNet(){ $('#net').classList.toggle('on', !netUp); }
+// 우리가 일부러 끊은 상태에서는 '다시 연결 중'을 띄우지 않는다
+function paintNet(){ $('#net').classList.toggle('on', !netUp && !parked); }
+
+/* ══ 연결 반납 ══
+   Realtime Database 는 «같은 순간에 열려 있는 연결» 수로 제한된다.
+   교육이 끝났는데 브라우저를 켜 둔 사람이 계속 한 자리를 차지하지 않도록 직접 끊는다. */
+const PARK_MS = 5 * 60 * 1000;
+function park(reason){
+  if (parked) return;
+  parked = reason;
+  try { goOffline(db); } catch {}
+  paintNet();
+}
+function unpark(){
+  clearTimeout(parkT); parkT = null;
+  if (!parked) return;
+  parked = false;
+  try { goOnline(db); } catch {}
+  paintNet();
+}
 
 function forceReconnect(){
   try { goOffline(db); goOnline(db); } catch {}
 }
 function wake(){                       // 화면으로 돌아왔을 때
   clearTimeout(wakeT);
+  if (parked === 'ended') return;      // 끝난 뒤에는 스스로 다시 붙지 않는다
+  if (parked === 'idle'){ unpark(); return; }
   wakeT = setTimeout(() => { if (!netUp) forceReconnect(); }, 1200);  // 스스로 붙을 시간을 잠깐 준다
 }
-document.addEventListener('visibilitychange', () => { if (!document.hidden) wake(); });
-window.addEventListener('pageshow', e => { if (e.persisted) forceReconnect(); else wake(); });
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden){
+    clearTimeout(parkT);
+    if (!parked) parkT = setTimeout(() => park('idle'), PARK_MS);   // 오래 안 보면 자리를 비켜 준다
+  } else { clearTimeout(parkT); wake(); }
+});
+window.addEventListener('pageshow', e => { if (e.persisted) { if (!parked) forceReconnect(); } else wake(); });
 window.addEventListener('focus',  wake);
-window.addEventListener('online', () => forceReconnect());
+window.addEventListener('online', () => { if (!parked) forceReconnect(); });
 
 const failAfter = ms => new Promise((_, rej) => setTimeout(() => rej(new Error('TIMEOUT')), ms));
 
@@ -551,6 +580,7 @@ async function endedOut(endedName, nextOpen){
   $('#dCnt').querySelector('b').textContent = String(q);
   $('#dAgain').textContent = nextOpen ? '다음 과정 입장하기' : '처음으로';
   $('#done').classList.add('on');
+  park('ended');                        // 끝났으니 연결을 반납한다
 }
 async function kickedOut(){
   await leaveRoom();
@@ -559,8 +589,10 @@ async function kickedOut(){
   $('#dCnt').style.display = 'none';
   $('#dAgain').textContent = '대기실로';
   $('#done').classList.add('on');
+  park('ended');
 }
 $('#dAgain').onclick = () => {
+  unpark();                             // 다시 쓰겠다고 했으니 연결을 되살린다
   $('#dCnt').style.display = '';
   $('#done').classList.remove('on');
   if (me) toLobby();
