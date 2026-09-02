@@ -618,6 +618,18 @@ qzBtn.onclick = () => {
 };
 $('#qzAns').addEventListener('keydown', e => { if (e.key === 'Enter') $('#qzGo').click(); });
 
+/* 문답모드가 아닐 때는 바깥을 누르거나 Esc 로 닫는다.
+   문답모드 중에는 닫지 않는다 — 버튼이 «끄기»로 바뀌어 있어 다시 열 방법이 없기 때문. */
+function closeQzPanel(e){
+  if (quiz.on || !qzPanel.classList.contains('on')) return;
+  if (e && (qzPanel.contains(e.target) || qzBtn.contains(e.target))) return;
+  qzPanel.classList.remove('on');
+  $('#qzErr').textContent = '';
+}
+document.addEventListener('mousedown', closeQzPanel);
+document.addEventListener('touchstart', closeQzPanel, { passive: true });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeQzPanel(); });
+
 $('#qzGo').onclick = async () => {
   if (quiz.on){ stopQuiz(); return; }
   const raw = $('#qzAns').value.trim();
