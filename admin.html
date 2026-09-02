@@ -135,6 +135,9 @@
   .tagAnon{font-size:10.5px;font-family:var(--mono);color:var(--badge);border:1px solid rgba(184,137,28,.45);background:#FBF4E4;border-radius:5px;padding:1px 6px;letter-spacing:.04em}
   .qhead{display:flex;align-items:center;gap:9px;margin-bottom:13px;flex-wrap:wrap}
   .qhead .filters{margin:0;flex:1}
+  .clearnote{font-size:12.5px;color:var(--badge);background:#FBF4E4;border:1px solid rgba(184,137,28,.3);
+    border-radius:9px;padding:9px 13px;margin-bottom:12px;line-height:1.5}
+  .clearnote:empty{display:none}
 
   /* ══ 출석부 ══ */
   .tblwrap{background:var(--card);border:1px solid var(--line);border-radius:13px;
@@ -268,6 +271,7 @@
         <button class="btn ghost sm" id="clearScreen">질문 화면 정리</button>
         <button class="btn ghost sm" id="unclearScreen" style="display:none">정리 취소</button>
       </div>
+      <div class="clearnote" id="clearNote"></div>
       <div id="lqList"></div>
     </div></div>
 
@@ -494,7 +498,7 @@ const hhmm = ts => { if(!ts) return '—'; const d=new Date(ts); return String(d
 const full = ts => { if(!ts) return '—'; const d=new Date(ts); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${hhmm(ts)}`; };
 const ALL = '__ALL__';
 
-let cfg = {}, courses = {}, secrets = {}, stats = {}, quizzes = {}, activeSid = null;
+let cfg = {}, courses = {}, secrets = {}, stats = {}, quizzes = {}, lives = {}, activeSid = null;
 let liveOff = [], liveSid = null, liveMsgs = {}, liveRoster = {}, liveOnline = {}, blocked = {};
 let ntcTo = 'all', teachNote = null;
 let detOff  = [], detSid  = null, detMsgs  = {}, detRoster  = {}, allAttend = {}, detQuizHits = {};
@@ -611,6 +615,7 @@ function boot(){
   onValue(ref(db,'secret'),   s => { secrets = s.val()||{}; applyConfig(); });
   onValue(ref(db,'stats'),    s => { stats = s.val()||{};   renderCourses(); });
   onValue(ref(db,'quiz'),     s => { quizzes = s.val()||{}; applyConfig(); });
+  onValue(ref(db,'live'),     s => { lives   = s.val()||{}; applyConfig(); });
   setInterval(drawElapsed, 20000);
 }
 
@@ -643,8 +648,12 @@ function applyConfig(){
   $('#qzMode').textContent  = qz.on ? (qz.mode === 'exact' ? '정확히 일치' : '포함되면 정답') : '—';
   $('#qzOff').disabled = !qz.on;
 
-  const cleared = !!(c && c.screenClearAt);
+  const lv = lives[activeSid] || {};
+  const cleared = !!lv.clearAt;
   $('#unclearScreen').style.display = cleared ? '' : 'none';
+  $('#clearNote').textContent = cleared
+    ? `${lv.clearBy === 'teacher' ? '강사' : '운영자'}가 ${hhmm(lv.clearAt)}에 정리함 — 그 뒤 질문만 강사 화면에 보입니다`
+    : '';
   drawElapsed();
   attachLive();
   renderCourses();
@@ -1111,13 +1120,13 @@ $('#clearScreen').onclick = async () => {
   const ok = await ask('강사 화면을 정리할까요?',
     '지금까지 올라온 질문이 강사 화면에서 내려갑니다.\n\n· 질문 기록과 참여도 집계는 그대로 남습니다\n· 이 화면과 참가자 채팅에는 계속 보입니다\n· 정리 뒤 올라오는 질문부터 다시 표시됩니다', '정리');
   if (!ok) return;
-  try { await update(ref(db,`sessions/${liveSid}`), { screenClearAt: Date.now() }); }
+  try { await update(ref(db,`live/${liveSid}`), { clearAt: Date.now(), clearBy: 'admin' }); }
   catch(e){ return toast('정리하지 못했습니다: ' + (e.code||e.message)); }
   toast('강사 화면을 정리했습니다');
 };
 $('#unclearScreen').onclick = async () => {
   if (!liveSid) return;
-  try { await update(ref(db,`sessions/${liveSid}`), { screenClearAt: null }); }
+  try { await update(ref(db,`live/${liveSid}`), { clearAt: null, clearBy: null }); }
   catch(e){ return toast('되돌리지 못했습니다: ' + (e.code||e.message)); }
   toast('정리를 취소했습니다');
 };

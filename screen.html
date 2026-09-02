@@ -194,6 +194,16 @@
     box-shadow:0 10px 26px -10px rgba(0,0,0,.8);
   }
   #qzBtn.qon{background:#E0574A;color:#fff}
+
+  /* 왼쪽 아래 — 강사가 직접 질문을 내린다. 실수로 눌리지 않게 두 번 눌러야 동작 */
+  #clrBtn{
+    position:fixed;left:26px;bottom:24px;z-index:30;
+    background:#232935;color:#C7CEDA;border:1px solid #333B49;
+    font-weight:700;font-size:14px;border-radius:10px;padding:12px 18px;cursor:pointer;
+    box-shadow:0 10px 26px -12px rgba(0,0,0,.8);font-family:var(--sans);
+  }
+  #clrBtn:hover{background:#2A3140;color:var(--ink)}
+  #clrBtn.arm{background:#E0574A;color:#fff;border-color:#E0574A}
   #qzPanel{
     position:fixed;right:calc(var(--aside) + 26px);bottom:78px;z-index:30;width:360px;max-width:calc(100vw - var(--aside) - 52px);
     background:#1A1F2A;border:1px solid #2E3644;border-radius:12px;padding:18px;
@@ -255,6 +265,7 @@
 
 <div id="flash">질문이 등록되었습니다</div>
 
+<button id="clrBtn">질문 정리</button>
 <button id="qzBtn">돌발퀴즈</button>
 <div id="qzPanel">
   <h3>돌발퀴즈</h3>
@@ -530,7 +541,7 @@ function attach(newSid, ended){
     roster = v;
     repaintColors(); drawRoster();
   }));
-  offs.push(onValue(ref(db, `sessions/${sid}/screenClearAt`), s => applyClear(s.val() || 0)));
+  offs.push(onValue(ref(db, `live/${sid}`), s => applyClear((s.val() || {}).clearAt || 0)));
   offs.push(onValue(ref(db, `quiz/${sid}`), s => {
     const prev = quiz.round;
     quiz = s.val() || { on:false };
@@ -544,6 +555,31 @@ function attach(newSid, ended){
     $('#tnote').classList.toggle('on', !!(n && n.text));
   }));
 }
+
+/* ══ 질문 정리 (강사가 직접) ══ */
+let armT = null;
+const clrBtn = $('#clrBtn');
+function disarm(){ clearTimeout(armT); armT = null; clrBtn.classList.remove('arm'); clrBtn.textContent = '질문 정리'; }
+clrBtn.onclick = async () => {
+  if (!sid) return;
+  if (!armT){                                   // 한 번 더 눌러야 실제로 정리
+    clrBtn.classList.add('arm');
+    clrBtn.textContent = '한 번 더 누르면 정리';
+    armT = setTimeout(disarm, 3500);
+    return;
+  }
+  disarm();
+  try {
+    await update(ref(db, `live/${sid}`), { clearAt: Date.now(), clearBy: 'teacher' });
+    $('#flash').textContent = '질문 화면을 정리했습니다';
+    flash();
+    setTimeout(() => { $('#flash').textContent = '질문이 등록되었습니다'; }, 2600);
+  } catch(e){
+    $('#flash').textContent = '정리하지 못했습니다';
+    flash();
+    setTimeout(() => { $('#flash').textContent = '질문이 등록되었습니다'; }, 2600);
+  }
+};
 
 /* ══════════ 돌발퀴즈 ══════════
    정답은 이 화면과 데이터베이스에만 있고 참가자에게는 내려가지 않는다.
@@ -597,7 +633,7 @@ $('#qzGo').onclick = async () => {
   judged = new Set();
   try{
     await set(ref(db, `quiz/${sid}`), { on:true, answers, mode:quizMode, round, startedAt: Date.now() });
-    await set(ref(db, `live/${sid}`), { quizOn:true, quizRound:round });
+    await update(ref(db, `live/${sid}`), { quizOn:true, quizRound:round });
   } catch(e){ $('#qzErr').textContent = '시작하지 못했습니다. (' + (e.code||e.message) + ')'; }
 };
 async function stopQuiz(){
