@@ -650,10 +650,14 @@ function applyConfig(){
 
   const lv = lives[activeSid] || {};
   const cleared = !!lv.clearAt;
-  $('#unclearScreen').style.display = cleared ? '' : 'none';
-  $('#clearNote').textContent = cleared
-    ? `${lv.clearBy === 'teacher' ? '강사' : '운영자'}가 ${hhmm(lv.clearAt)}에 정리함 — 그 뒤 질문만 강사 화면에 보입니다`
+  const offN = Object.keys(lv.off || {}).length;
+  const parts = [];
+  if (cleared) parts.push(`${lv.clearBy === 'teacher' ? '강사' : '운영자'}가 ${hhmm(lv.clearAt)}에 전체 정리`);
+  if (offN)    parts.push(`강사가 ${offN}건을 하나씩 내림`);
+  $('#clearNote').textContent = parts.length
+    ? parts.join(' · ') + ' — 강사 화면에서만 내려간 것이고 기록은 그대로입니다'
     : '';
+  $('#unclearScreen').style.display = (cleared || offN) ? '' : 'none';
   drawElapsed();
   attachLive();
   renderCourses();
@@ -1126,9 +1130,9 @@ $('#clearScreen').onclick = async () => {
 };
 $('#unclearScreen').onclick = async () => {
   if (!liveSid) return;
-  try { await update(ref(db,`live/${liveSid}`), { clearAt: null, clearBy: null }); }
+  try { await update(ref(db,`live/${liveSid}`), { clearAt: null, clearBy: null, off: null }); }
   catch(e){ return toast('되돌리지 못했습니다: ' + (e.code||e.message)); }
-  toast('정리를 취소했습니다');
+  toast('정리를 되돌렸습니다 — 강사 화면에 다시 나옵니다');
 };
 
 /* ══ 기록 상세 ══ */

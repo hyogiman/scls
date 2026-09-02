@@ -119,6 +119,15 @@
   .q.ans.no{background:#20242E;opacity:.78}
   .q.ans.no .mark .st{background:#333B49;color:#78828F}
 
+  /* 카드 하나만 내리기 — 평소엔 숨어 있다가 카드에 손이 가면 나타난다 */
+  .q .x{
+    position:absolute;right:9px;top:9px;width:30px;height:30px;border:none;border-radius:7px;
+    background:#2A303C;color:#8D96A8;font-size:16px;line-height:1;cursor:pointer;
+    opacity:0;transition:opacity .13s, background .13s, color .13s;font-family:var(--sans);
+  }
+  .q:hover .x, .q .x:focus-visible{opacity:1}
+  .q .x:hover{background:#E0574A;color:#fff}
+
   .q.fresh{box-shadow:0 0 0 2px var(--c,var(--badge)),0 14px 36px -16px rgba(0,0,0,.75)}
   .q.done{opacity:.45}
   .q.done .tag{background:#39414F;color:#AAB2C0;box-shadow:none}
@@ -337,7 +346,7 @@ const syncCount = () => document.querySelector('#mQ').textContent =
 let sid, attached = null, offs = [];   // 현재 세션 / 실제로 리스너를 건 세션
 let quiz = { on:false }, quizMode = 'contains', quizHits = {}, judged = new Set();
 let pgmName = null;                    // 진행 중인 과정 이름 (없으면 null)
-let clearAt = 0, primeUntil = 0;       // 화면 정리 기준 시각 / 첫 로딩 알림 억제
+let clearAt = 0, offMap = {}, primeUntil = 0;       // 화면 정리 기준 시각 / 첫 로딩 알림 억제
 let order = new Map();                 // 사번 → 입장 순번 (색 배정 기준)
 let roster = {};                       // 사번 → 출석 정보
 
@@ -439,7 +448,7 @@ function paint(node, m){
 }
 
 function addCard(key, m, v){
-  if (m.hide || (m.ts || 0) <= clearAt) return;
+  if (m.hide || offMap[key] || (m.ts || 0) <= clearAt) return;
   if (m.quizRound && !v) return;                    // 문답모드가 아닐 때의 지난 답안은 띄우지 않는다
   const node = el('article','q' + (v ? ' ans ' + (v.ok ? 'ok' : 'no') : ''));
   node.dataset.ts = m.ts || 0;
@@ -450,6 +459,11 @@ function addCard(key, m, v){
   const tag = el('span','tag');
   tag.append(el('span','nm'), el('span','aff'));
   node.append(tag, el('p'), el('time'));
+  const x = el('button','x','✕');
+  x.title = '이 질문만 화면에서 내리기';
+  x.setAttribute('aria-label', '이 질문 내리기');
+  x.onclick = () => dismissOne(key);
+  node.append(x);
   if (v){
     const mk = el('div','mark');
     if (v.ok && v.rank) mk.append(el('span','rk', String(v.rank)));
@@ -474,14 +488,28 @@ function flash(){
   flashT = setTimeout(() => f.classList.remove('on'), 2400);
 }
 
-/* 관리자가 '질문 화면 정리'를 누르면 그 시각 이전 질문을 화면에서 내린다 (기록은 그대로) */
-function applyClear(at){
-  clearAt = at || 0;
+/* 화면에서 내린 것들을 반영한다 (기록은 그대로 남는다).
+   clearAt = 그 시각 이전 전체 / off = 하나씩 내린 것 */
+function applyLive(v){
+  clearAt = (v && v.clearAt) || 0;
+  offMap  = (v && v.off) || {};
   for (const [key, node] of [...cards]){
-    if ((+node.dataset.ts || 0) <= clearAt){ node.remove(); cards.delete(key); }
+    if ((+node.dataset.ts || 0) <= clearAt || offMap[key]){ node.remove(); cards.delete(key); }
   }
   syncCount();
   if (!cards.size) showNote('질문을 기다리는 중입니다','참가자가 질문을 보내면 이 화면에 바로 올라옵니다.');
+}
+
+/* 카드 하나만 내린다. 강사 화면에서만 사라지고 기록·참가자 화면에는 남는다. */
+async function dismissOne(key){
+  offMap[key] = true;                       // 서버 확인 전에도 다시 올라오지 않게
+  const node = cards.get(key);
+  if (node){ node.remove(); cards.delete(key); syncCount(); }   // 손끝 반응을 먼저
+  if (!cards.size) showNote('질문을 기다리는 중입니다','참가자가 질문을 보내면 이 화면에 바로 올라옵니다.');
+  if (!sid) return;
+  try { await update(ref(db, `live/${sid}/off`), { [key]: true }); }
+  catch { $('#flash').textContent = '내리지 못했습니다'; flash();
+          setTimeout(() => { $('#flash').textContent = '질문이 등록되었습니다'; }, 2600); }
 }
 
 function dropCard(key){
@@ -515,7 +543,7 @@ function attach(newSid, ended){
   }
   $('#pgm').textContent = pgmName || '이름 없는 과정';
   if (attached === sid) return;
-  attached = sid; clearAt = 0; order = new Map(); primeUntil = Date.now() + 2000;
+  attached = sid; clearAt = 0; offMap = {}; order = new Map(); primeUntil = Date.now() + 2000;
   quiz = { on:false }; quizHits = {}; judged = new Set(); paintQuiz();
   $('#tnote').classList.remove('on'); $('#tnoteText').textContent = '';   // 첫 로딩 때는 알림 억제
   $('#live').classList.add('on');
@@ -541,7 +569,7 @@ function attach(newSid, ended){
     roster = v;
     repaintColors(); drawRoster();
   }));
-  offs.push(onValue(ref(db, `live/${sid}`), s => applyClear((s.val() || {}).clearAt || 0)));
+  offs.push(onValue(ref(db, `live/${sid}`), s => applyLive(s.val() || {})));
   offs.push(onValue(ref(db, `quiz/${sid}`), s => {
     const prev = quiz.round;
     quiz = s.val() || { on:false };
