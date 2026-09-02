@@ -346,7 +346,7 @@ const syncCount = () => document.querySelector('#mQ').textContent =
 let sid, attached = null, offs = [];   // 현재 세션 / 실제로 리스너를 건 세션
 let quiz = { on:false }, quizMode = 'contains', quizHits = {}, judged = new Set();
 let pgmName = null;                    // 진행 중인 과정 이름 (없으면 null)
-let clearAt = 0, offMap = {}, primeUntil = 0;       // 화면 정리 기준 시각 / 첫 로딩 알림 억제
+let clearAt = 0, offMap = {}, backMap = {}, primeUntil = 0;       // 화면 정리 기준 시각 / 첫 로딩 알림 억제
 let order = new Map();                 // 사번 → 입장 순번 (색 배정 기준)
 let roster = {};                       // 사번 → 출석 정보
 
@@ -447,9 +447,14 @@ function paint(node, m){
   node.querySelector('p').textContent    = m.text || '';
 }
 
-function addCard(key, m, v){
-  if (m.hide || offMap[key] || (m.ts || 0) <= clearAt) return;
-  if (m.quizRound && !v) return;                    // 문답모드가 아닐 때의 지난 답안은 띄우지 않는다
+/* 받은 질문을 그대로 들고 있는다. 정리를 되돌리면 이걸로 화면을 다시 그린다. */
+const store = new Map();               // 메시지키 → { m, v }
+// 내려간 것 = 하나씩 내렸거나(off) 전체 정리 이전인 것. 단 관리자가 되살린 것(back)은 예외.
+const visible = (key, m) => !m.hide && !offMap[key] && ((m.ts || 0) > clearAt || !!backMap[key]);
+
+function makeCard(key, m, v){
+  if (!visible(key, m)) return null;
+  if (m.quizRound && !v) return null;               // 문답모드가 아닐 때의 지난 답안은 띄우지 않는다
   const node = el('article','q' + (v ? ' ans ' + (v.ok ? 'ok' : 'no') : ''));
   node.dataset.ts = m.ts || 0;
   node.dataset.no = m.empNo || '';
@@ -473,11 +478,29 @@ function addCard(key, m, v){
   paint(node, m);
   if (newestBottom) board.append(node); else board.prepend(node);
   cards.set(key, node);
+  return node;
+}
+
+function addCard(key, m, v){                        // 새로 도착한 것
+  store.set(key, { m, v });
+  const node = makeCard(key, m, v);
+  if (!node) return;
   node.classList.add('fresh');
   setTimeout(() => node.classList.remove('fresh'), 9000);
   syncCount(); hideNote();
   if (!v && Date.now() > primeUntil) flash();       // 답안이 올라올 때마다 알림을 띄우지는 않는다
   scrollNewest();
+}
+
+/* 화면을 통째로 다시 그린다 — 정리를 되돌렸을 때 내려간 질문이 돌아온다 */
+function rebuild(){
+  board.innerHTML = ''; cards.clear();
+  [...store.entries()]
+    .sort((a, b) => (a[1].m.ts || 0) - (b[1].m.ts || 0))
+    .forEach(([k, r]) => makeCard(k, r.m, r.v));
+  syncCount();
+  if (cards.size) hideNote();
+  else showNote('질문을 기다리는 중입니다','참가자가 질문을 보내면 이 화면에 바로 올라옵니다.');
 }
 
 let flashT;
@@ -493,11 +516,8 @@ function flash(){
 function applyLive(v){
   clearAt = (v && v.clearAt) || 0;
   offMap  = (v && v.off) || {};
-  for (const [key, node] of [...cards]){
-    if ((+node.dataset.ts || 0) <= clearAt || offMap[key]){ node.remove(); cards.delete(key); }
-  }
-  syncCount();
-  if (!cards.size) showNote('질문을 기다리는 중입니다','참가자가 질문을 보내면 이 화면에 바로 올라옵니다.');
+  backMap = (v && v.back) || {};
+  rebuild();
 }
 
 /* 카드 하나만 내린다. 강사 화면에서만 사라지고 기록·참가자 화면에는 남는다. */
@@ -520,7 +540,7 @@ function dropCard(key){
 
 function clearAll(){
   offs.forEach(f => f()); offs = [];
-  board.innerHTML = ''; cards.clear();
+  board.innerHTML = ''; cards.clear(); store.clear();
   $('#mAll').textContent = '0'; $('#mQ').textContent = '0';
   roster = {}; drawRoster();
 }
@@ -543,7 +563,7 @@ function attach(newSid, ended){
   }
   $('#pgm').textContent = pgmName || '이름 없는 과정';
   if (attached === sid) return;
-  attached = sid; clearAt = 0; offMap = {}; order = new Map(); primeUntil = Date.now() + 2000;
+  attached = sid; clearAt = 0; offMap = {}; backMap = {}; order = new Map(); primeUntil = Date.now() + 2000;
   quiz = { on:false }; quizHits = {}; judged = new Set(); paintQuiz();
   $('#tnote').classList.remove('on'); $('#tnoteText').textContent = '';   // 첫 로딩 때는 알림 억제
   $('#live').classList.add('on');
@@ -552,11 +572,13 @@ function attach(newSid, ended){
   const qRef = query(ref(db, `msg/${sid}`), orderByChild('ts'), limitToLast(200));
   offs.push(onChildAdded(qRef, s => { const m = s.val(); addCard(s.key, m, judge(s.key, m)); }));
   offs.push(onChildChanged(qRef, s => {
-    const m = s.val(), n = cards.get(s.key);
-    if (m.hide){ dropCard(s.key); return; }
-    if (n) paint(n, m); else addCard(s.key, m);
+    const m = s.val(), prev = store.get(s.key);
+    store.set(s.key, { m, v: prev ? prev.v : null });
+    const n = cards.get(s.key);
+    if (!visible(s.key, m)){ dropCard(s.key); return; }
+    if (n) paint(n, m); else rebuild();
   }));
-  offs.push(onChildRemoved(qRef, s => dropCard(s.key)));
+  offs.push(onChildRemoved(qRef, s => { store.delete(s.key); dropCard(s.key); }));
 
   offs.push(onValue(ref(db, `attend/${sid}`), s => {
     const v = s.val() || {};
@@ -598,7 +620,7 @@ clrBtn.onclick = async () => {
   }
   disarm();
   try {
-    await update(ref(db, `live/${sid}`), { clearAt: Date.now(), clearBy: 'teacher' });
+    await update(ref(db, `live/${sid}`), { clearAt: Date.now(), clearBy: 'teacher', back: null });
     $('#flash').textContent = '질문 화면을 정리했습니다';
     flash();
     setTimeout(() => { $('#flash').textContent = '질문이 등록되었습니다'; }, 2600);

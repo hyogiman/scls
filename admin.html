@@ -132,6 +132,9 @@
   .qi .bd{font-size:14.5px;line-height:1.65;white-space:pre-wrap;word-break:break-word;margin-bottom:11px}
   .qi .ops{display:flex;gap:7px;flex-wrap:wrap}
   .qi.anon{border-left-color:var(--badge);border-left-style:dashed}
+  .qi.offscr{background:#F7F6F2}
+  .tagOff{font-size:10.5px;font-family:var(--mono);color:#7A6320;border:1px solid rgba(184,137,28,.4);
+    background:#FBF4E4;border-radius:5px;padding:1px 6px;letter-spacing:.02em}
   .tagAnon{font-size:10.5px;font-family:var(--mono);color:var(--badge);border:1px solid rgba(184,137,28,.45);background:#FBF4E4;border-radius:5px;padding:1px 6px;letter-spacing:.04em}
   .qhead{display:flex;align-items:center;gap:9px;margin-bottom:13px;flex-wrap:wrap}
   .qhead .filters{margin:0;flex:1}
@@ -266,10 +269,11 @@
           <button class="chip on" data-lf="all">전체</button>
           <button class="chip" data-lf="todo">답변 전</button>
           <button class="chip" data-lf="done">답변함</button>
+          <button class="chip" data-lf="offscreen">화면에서 내려감</button>
           <button class="chip" data-lf="hidden">숨긴 것</button>
         </div>
         <button class="btn ghost sm" id="clearScreen">질문 화면 정리</button>
-        <button class="btn ghost sm" id="unclearScreen" style="display:none">정리 취소</button>
+        <button class="btn ghost sm" id="unclearScreen" style="display:none">전체 되돌리기</button>
       </div>
       <div class="clearnote" id="clearNote"></div>
       <div id="lqList"></div>
@@ -615,7 +619,7 @@ function boot(){
   onValue(ref(db,'secret'),   s => { secrets = s.val()||{}; applyConfig(); });
   onValue(ref(db,'stats'),    s => { stats = s.val()||{};   renderCourses(); });
   onValue(ref(db,'quiz'),     s => { quizzes = s.val()||{}; applyConfig(); });
-  onValue(ref(db,'live'),     s => { lives   = s.val()||{}; applyConfig(); });
+  onValue(ref(db,'live'),     s => { lives   = s.val()||{}; applyConfig(); drawLiveQ(); });
   setInterval(drawElapsed, 20000);
 }
 
@@ -655,7 +659,7 @@ function applyConfig(){
   if (cleared) parts.push(`${lv.clearBy === 'teacher' ? '강사' : '운영자'}가 ${hhmm(lv.clearAt)}에 전체 정리`);
   if (offN)    parts.push(`강사가 ${offN}건을 하나씩 내림`);
   $('#clearNote').textContent = parts.length
-    ? parts.join(' · ') + ' — 강사 화면에서만 내려간 것이고 기록은 그대로입니다'
+    ? parts.join(' · ') + ' — ‘화면에서 내려감’ 칸에서 하나씩 다시 올릴 수 있습니다'
     : '';
   $('#unclearScreen').style.display = (cleared || offN) ? '' : 'none';
   drawElapsed();
@@ -698,14 +702,19 @@ function drawLiveStats(){
 }
 
 /* ══ 질문 렌더 (진행 중 · 기록 공용) ══ */
-function renderQ(box, data, sid, filt, emptyMsg){
+function renderQ(box, data, sid, filt, emptyMsg, lv){
   box.innerHTML = '';
   if (!sid){ box.append(el('div','empty', emptyMsg)); return; }
+  // 강사 화면에서 내려간 질문인지 — 하나씩 내렸거나 전체 정리 이전이고, 되살려두지 않은 것
+  const offA = (lv && lv.off) || {}, backA = (lv && lv.back) || {}, cutA = (lv && lv.clearAt) || 0;
+  const isOff = (key, m) => !!lv && (!!offA[key] || ((m.ts||0) <= cutA && !backA[key]));
+
   let items = Object.entries(data).filter(([,m]) => !m.quizRound)   // 퀴즈 답안은 질문이 아니다
-    .sort((a,b)=>(b[1].ts||0)-(a[1].ts||0)).filter(([,m]) =>
-    filt==='all'  ? !m.hide :
-    filt==='todo' ? (!m.hide && !m.done) :
-    filt==='done' ? (!m.hide && m.done) : !!m.hide);
+    .sort((a,b)=>(b[1].ts||0)-(a[1].ts||0)).filter(([k,m]) =>
+    filt==='all'      ? !m.hide :
+    filt==='todo'     ? (!m.hide && !m.done) :
+    filt==='done'     ? (!m.hide && m.done) :
+    filt==='offscreen'? (!m.hide && isOff(k,m)) : !!m.hide);
   if (!items.length){ box.append(el('div','empty','해당하는 질문이 없습니다.')); return; }
 
   for (const [key,m] of items){
@@ -715,6 +724,8 @@ function renderQ(box, data, sid, filt, emptyMsg){
               el('span','aff', [m.position,m.dept].filter(Boolean).join(' · ')),
               el('span','no', m.empNo||''));
     if (m.anon) hd.append(el('span','tagAnon','익명'));
+    const off = isOff(key, m);
+    if (off){ n.classList.add('offscr'); hd.append(el('span','tagOff','강사 화면에서 내려감')); }
     hd.append(el('time', null, hhmm(m.ts)));
     n.append(hd, el('div','bd', m.text||''));
     const ops = el('div','ops');
@@ -727,10 +738,28 @@ function renderQ(box, data, sid, filt, emptyMsg){
       if (!await ask('질문을 지울까요?','지운 질문은 되살릴 수 없습니다.\n잠시 가려두려면 ‘숨기기’를 쓰세요.','삭제',true)) return;
       await remove(ref(db,`msg/${sid}/${key}`)); toast('질문을 지웠습니다');
     };
-    ops.append(bDone,bHide,bDel); n.append(ops); box.append(n);
+    ops.append(bDone,bHide,bDel);
+    if (off){
+      const bBack = el('button','btn sm','강사 화면에 다시');
+      bBack.onclick = () => restoreOne(key, m);
+      ops.append(bBack);
+    }
+    n.append(ops); box.append(n);
   }
 }
-const drawLiveQ = () => renderQ($('#lqList'), liveMsgs, liveSid, lFilter, '진행 중인 과정이 없습니다.');
+const drawLiveQ = () => renderQ($('#lqList'), liveMsgs, liveSid, lFilter, '진행 중인 과정이 없습니다.', lives[liveSid] || {});
+
+/* 답을 못 한 질문 하나만 강사 화면에 되돌린다 */
+async function restoreOne(key, m){
+  if (!liveSid) return;
+  const lv = lives[liveSid] || {}, up = {};
+  if ((lv.off || {})[key]) up['off/' + key] = null;
+  if ((m.ts || 0) <= (lv.clearAt || 0)) up['back/' + key] = true;   // 전체 정리 이전 것은 예외로 표시
+  if (!Object.keys(up).length) return;
+  try { await update(ref(db, `live/${liveSid}`), up); }
+  catch(e){ return toast('올리지 못했습니다: ' + (e.code||e.message)); }
+  toast('강사 화면에 다시 올렸습니다');
+}
 const drawDetQ  = () => {
   if (detSid === ALL){ $('#dqList').innerHTML=''; $('#dqList').append(el('div','empty','합산 보기에서는 질문 목록을 보여주지 않습니다.\n목록에서 과정을 하나 고르세요.')); return; }
   renderQ($('#dqList'), detMsgs, detSid, dFilter, '과정을 고르세요.');
@@ -1124,13 +1153,13 @@ $('#clearScreen').onclick = async () => {
   const ok = await ask('강사 화면을 정리할까요?',
     '지금까지 올라온 질문이 강사 화면에서 내려갑니다.\n\n· 질문 기록과 참여도 집계는 그대로 남습니다\n· 이 화면과 참가자 채팅에는 계속 보입니다\n· 정리 뒤 올라오는 질문부터 다시 표시됩니다', '정리');
   if (!ok) return;
-  try { await update(ref(db,`live/${liveSid}`), { clearAt: Date.now(), clearBy: 'admin' }); }
+  try { await update(ref(db,`live/${liveSid}`), { clearAt: Date.now(), clearBy: 'admin', back: null }); }
   catch(e){ return toast('정리하지 못했습니다: ' + (e.code||e.message)); }
   toast('강사 화면을 정리했습니다');
 };
 $('#unclearScreen').onclick = async () => {
   if (!liveSid) return;
-  try { await update(ref(db,`live/${liveSid}`), { clearAt: null, clearBy: null, off: null }); }
+  try { await update(ref(db,`live/${liveSid}`), { clearAt: null, clearBy: null, off: null, back: null }); }
   catch(e){ return toast('되돌리지 못했습니다: ' + (e.code||e.message)); }
   toast('정리를 되돌렸습니다 — 강사 화면에 다시 나옵니다');
 };
