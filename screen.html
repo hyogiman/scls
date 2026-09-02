@@ -296,6 +296,7 @@ const syncCount = () => document.querySelector('#mQ').textContent =
   String([...cards.values()].filter(n => !n.dataset.quiz).length);
 let sid, attached = null, offs = [];   // 현재 세션 / 실제로 리스너를 건 세션
 let quiz = { on:false }, quizMode = 'contains', quizHits = {}, judged = new Set();
+let pgmName = null;                    // 진행 중인 과정 이름 (없으면 null)
 let clearAt = 0, primeUntil = 0;       // 화면 정리 기준 시각 / 첫 로딩 알림 억제
 let order = new Map();                 // 사번 → 입장 순번 (색 배정 기준)
 
@@ -446,10 +447,12 @@ function attach(newSid, ended){
       $('#pgm').textContent = ended.name;
       showNote(`〈${ended.name}〉 과정이 끝났습니다`, '수고하셨습니다.', ended);
     } else {
+      $('#pgm').textContent = '진행 중인 과정 없음';   // 지워진 과정 이름이 남지 않게
       showNote('다음 과정을 기다리는 중입니다', '관리자 화면에서 과정을 진행하면 이 화면이 켜집니다.');
     }
     return;
   }
+  $('#pgm').textContent = pgmName || '이름 없는 과정';
   if (attached === sid) return;
   attached = sid; clearAt = 0; order = new Map(); primeUntil = Date.now() + 2000;
   quiz = { on:false }; quizHits = {}; judged = new Set(); paintQuiz();
@@ -588,9 +591,8 @@ function start(){
 
   onValue(ref(db, 'config'), s => {
     const c = s.val() || {};
-    const nm = c.programName || '이름 없는 과정';
-    $('#pgm').textContent = nm;
-    document.title = nm + ' · 강사용';
+    pgmName = c.sessionId ? (c.programName || '이름 없는 과정') : null;
+    document.title = (pgmName || '질문 화면') + ' · 강사용';
     attach(c.sessionId || null, c.lastEnded || null);
   });
 }

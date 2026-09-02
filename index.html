@@ -775,7 +775,7 @@ function start(){
     const nm = cfg.programName || '이름 없는 과정';
     $('#gPgm').textContent = sid ? nm : '교육 소통창';
     $('#rPgm').textContent = pgmLabel();
-    document.title = nm;
+    document.title = sid ? nm : '교육 소통창';
     applyOpen();
 
     const newSid = cfg.sessionId || null;

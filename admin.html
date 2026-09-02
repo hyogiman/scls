@@ -1012,8 +1012,12 @@ async function wipe(path){
 async function dropCourse(id, c){
   if (!await ask('과정을 지울까요?', `〈${c.name}〉의 질문·출석 기록이 모두 사라집니다.\n되살릴 수 없습니다.`, '삭제', true)) return;
   try{
-    if (id === activeSid) await update(ref(db,'config'), { sessionId: null, lastEnded: null });
-    else if ((cfg.lastEnded || {}).sid === id) await update(ref(db,'config'), { lastEnded: null });
+    const up = {};
+    if (id === activeSid){ up.sessionId = null; up.lastEnded = null; }
+    else if ((cfg.lastEnded || {}).sid === id) up.lastEnded = null;
+    // 진행 중인 과정이 없을 때만 이름을 비운다 — 다른 과정이 돌고 있으면 그 이름을 지우면 안 된다
+    if (!activeSid || id === activeSid){ up.programName = null; up.teacher = null; }
+    if (Object.keys(up).length) await update(ref(db,'config'), up);
     for (const k of ['msg','attend','presence','notice','blocked','quizHit','gate','stats','secret','live','quiz','teachNote']){
       const r = await wipe(`${k}/${id}`);
       if (r !== true) throw r;
