@@ -145,15 +145,13 @@
   .rhd{flex:0 0 auto;padding:18px 20px 14px;border-bottom:1px solid var(--line)}
   .rhd strong{font-size:19px;font-weight:700;letter-spacing:-.02em;color:var(--ink)}
   .rlist{flex:1 1 auto;overflow-y:auto;padding:14px 14px 96px}
-  .rgrp{margin-bottom:18px}
-  .rgrp h4{display:flex;align-items:baseline;justify-content:space-between;gap:8px;
-    font-size:11.5px;font-weight:600;color:#707A8B;letter-spacing:.03em;
-    padding:0 6px 7px;border-bottom:1px dashed #262C38;margin-bottom:7px}
-  .rgrp h4 i{font-style:normal;font-family:var(--mono);font-size:11px;color:#5C6675}
-  .rman{display:flex;align-items:baseline;gap:8px;padding:5px 6px;border-radius:5px}
-  .rman .nm{font-size:15.5px;font-weight:700;color:var(--c,var(--ink));letter-spacing:-.01em}
-  .rman .po{font-size:12px;color:var(--muted)}
-  .rman .qn{margin-left:auto;font-family:var(--mono);font-size:11.5px;color:var(--badge);flex:0 0 auto}
+  /* 한 줄짜리 명찰 — 질문 카드의 명찰과 같은 모양을 작게 줄인 것 */
+  .rman{display:flex;align-items:center;gap:9px;padding:5px 4px}
+  .rman .tagm{flex:0 0 auto;background:var(--c,var(--badge));color:#161A22;
+    font-size:13.5px;font-weight:800;letter-spacing:-.01em;padding:4px 10px;border-radius:3px}
+  .rman .po{flex:1;min-width:0;font-size:12.5px;color:var(--muted);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .rman .qn{flex:0 0 auto;font-family:var(--mono);font-size:11.5px;color:var(--badge)}
   .rempty{color:#5C6675;font-size:13px;line-height:1.7;padding:22px 8px;text-align:center;white-space:pre-line}
 
   @media (max-width:1000px){
@@ -356,32 +354,20 @@ function colorOf(no, isAnon){
 }
 function drawRoster(){
   const box = $('#rList'); box.innerHTML = '';
-  const rows = Object.entries(roster).map(([no, r]) => ({
-    no, name: r.name || '이름 없음', pos: r.position || '',
-    dept: r.dept || '소속 없음', q: r.qCount || 0,
-  }));
+  // 입장 순서대로 — 사람 색을 매기는 순서와 같고, 새로 들어와도 앞사람 자리가 안 밀린다
+  const jt = r => (r && r.joinedAt) ? r.joinedAt : Number.MAX_SAFE_INTEGER;
+  const rows = Object.entries(roster)
+    .sort((a, b) => jt(a[1]) - jt(b[1]) || String(a[0]).localeCompare(String(b[0])));
+
   if (!rows.length){ box.append(el('div','rempty','아직 입장한 사람이 없습니다.')); return; }
 
-  const by = new Map();
-  for (const r of rows){ if (!by.has(r.dept)) by.set(r.dept, []); by.get(r.dept).push(r); }
-  // 인원이 많은 소속부터, 같으면 이름순
-  const groups = [...by.entries()].sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0], 'ko'));
-
-  for (const [dept, ppl] of groups){
-    ppl.sort((a, b) => a.name.localeCompare(b.name, 'ko'));
-    const g = el('div','rgrp');
-    const h = el('h4');
-    h.append(el('span', null, dept), el('i', null, ppl.length + '명'));
-    g.append(h);
-    for (const r of ppl){
-      const row = el('div','rman');
-      row.style.setProperty('--c', colorOf(r.no, false));
-      row.append(el('span','nm', r.name));
-      if (r.pos) row.append(el('span','po', r.pos));
-      if (r.q)   row.append(el('span','qn', '질문 ' + r.q));
-      g.append(row);
-    }
-    box.append(g);
+  for (const [no, r] of rows){
+    const row = el('div','rman');
+    row.style.setProperty('--c', colorOf(no, false));
+    row.append(el('span','tagm', r.name || '이름 없음'));
+    row.append(el('span','po', [r.position, r.dept].filter(Boolean).join(' · ')));
+    if (r.qCount) row.append(el('span','qn', String(r.qCount)));
+    box.append(row);
   }
 }
 
