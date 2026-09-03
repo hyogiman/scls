@@ -71,6 +71,11 @@
   }
   .zoom button:hover{color:var(--ink);border-color:#3E4A5E}
   .zoom button:focus-visible{outline:2px solid var(--badge);outline-offset:2px}
+  #awake::before{content:'';display:inline-block;width:7px;height:7px;border-radius:50%;
+    background:#4A5468;margin-right:7px;vertical-align:middle}
+  #awake[data-s="on"]{color:var(--ok);border-color:rgba(95,191,155,.4)}
+  #awake[data-s="on"]::before{background:var(--ok)}
+  #awake[data-s="no"]{opacity:.45}
 
   /* ── 질문 보드 ── */
   main{flex:1 1 auto;overflow-y:auto;padding:32px 26px 60px}
@@ -268,6 +273,7 @@
       <button id="zOut" title="글자 작게" aria-label="글자 작게">A−</button>
       <button id="zIn" title="글자 크게" aria-label="글자 크게">A＋</button>
       <button id="ordBtn" title="새 질문이 쌓이는 방향" style="width:auto;padding:0 12px">↓ 최신 아래</button>
+      <button id="awake" style="width:auto;padding:0 12px">화면 유지</button>
     </div>
   </div>
 </header>
@@ -412,6 +418,56 @@ orderBtn.onclick = () => {
   paintOrderBtn(); scrollNewest();
 };
 paintOrderBtn();
+
+/* ══ 화면 꺼짐 막기 ══
+   브라우저가 운영체제에 «화면을 끄지 말라»고 요청한다(Screen Wake Lock).
+   다만 회사 정책으로 강제되는 잠금은 보안 하위 시스템이 직접 거는 것이라 웹에서 막을 수 없다.
+   그래서 «켜졌는지»를 눈에 보이게 두어, 안 되면 정책 문제임을 바로 알 수 있게 한다. */
+let wakeLock = null;
+let wakeWant = localStorage.getItem('qa_wake') !== 'off';
+const awakeBtn = $('#awake');
+
+function paintAwake(state, why){
+  awakeBtn.dataset.s = state;
+  awakeBtn.textContent = state === 'on' ? '화면 유지 중'
+                       : state === 'no' ? '화면 유지 미지원' : '화면 유지 꺼짐';
+  awakeBtn.title = state === 'on'
+      ? '화면이 절전으로 꺼지지 않습니다. 눌러서 끌 수 있습니다.\n그래도 잠긴다면 회사 정책으로 강제된 잠금이라 웹에서는 막을 수 없습니다.'
+    : state === 'no'
+      ? '이 브라우저는 화면 유지 기능이 없습니다. 크롬이나 엣지에서 열어 보세요.'
+      : '눌러서 켭니다.' + (why ? '\n(' + why + ')' : '');
+}
+
+async function keepAwake(){
+  if (!wakeWant) return;
+  if (!navigator.wakeLock || !navigator.wakeLock.request){ paintAwake('no'); return; }
+  if (wakeLock || document.hidden) return;
+  try{
+    wakeLock = await navigator.wakeLock.request('screen');
+    wakeLock.addEventListener('release', () => { wakeLock = null; if (wakeWant) paintAwake('off'); });
+    paintAwake('on');
+  } catch(e){
+    wakeLock = null;
+    paintAwake('off', (e && (e.name || e.message)) || '');
+  }
+}
+awakeBtn.onclick = async () => {
+  if (wakeLock || !wakeWant){                       // 켜져 있으면 끄고, 꺼져 있으면 켠다
+    wakeWant = !wakeWant;
+    localStorage.setItem('qa_wake', wakeWant ? 'on' : 'off');
+  }
+  if (!wakeWant){
+    try { if (wakeLock) await wakeLock.release(); } catch {}
+    wakeLock = null; paintAwake('off');
+    return;
+  }
+  keepAwake();
+};
+document.addEventListener('visibilitychange', () => { if (!document.hidden) keepAwake(); });
+window.addEventListener('focus', keepAwake);
+document.addEventListener('click', keepAwake, { once: true });   // 사용자 동작을 요구하는 브라우저 대비
+setInterval(keepAwake, 60000);                                   // 조용히 풀렸을 때 되건다
+keepAwake();
 
 /* ── 글자 크기 ── */
 let qs = parseFloat(localStorage.getItem('qa_zoom') || '1');
