@@ -109,6 +109,11 @@
   .crs .num{font-family:var(--mono);font-size:12.5px;color:var(--muted);flex:0 0 auto;white-space:nowrap}
   .crs .num b{color:var(--ink);font-weight:600}
   .crs .ops{display:flex;gap:6px;flex:0 0 auto;flex-wrap:wrap}
+  /* 보관한 과정 — 치워 둔 서류처럼 점선 테두리에 차분한 바탕 */
+  .crs.arc{background:var(--paper);border-style:dashed}
+  .crs.arc .nm{color:#4A5060}
+  .modes button .arcn{margin-left:6px;font-family:var(--mono);font-size:11px;font-weight:500;color:var(--muted)}
+  .modes button .arcn:empty{display:none}
 
   /* ══ 기록 상세 ══ */
   .backbar{flex:0 0 auto;display:flex;align-items:center;gap:12px;padding:11px 20px;background:var(--card);border-bottom:1px solid var(--line)}
@@ -238,6 +243,7 @@
     <div class="modes">
       <button id="mLive" class="on">진행 중<span class="badge" id="liveDot"></span></button>
       <button id="mMng">관리</button>
+      <button id="mArc">보관<span class="arcn" id="arcCnt"></span></button>
     </div>
     <button class="btn ghost sm" id="signout" style="flex:0 0 auto">로그아웃</button>
   </div>
@@ -366,7 +372,7 @@
 
       <div class="block">
         <h3>등록한 과정</h3>
-        <p class="desc">‘기록’은 지난 과정의 질문·출석부를 보는 곳입니다. ‘진행’을 누르면 그 과정이 시작되고, 진행 중이던 과정의 참가자는 모두 퇴장합니다.</p>
+        <p class="desc">‘기록’은 지난 과정의 질문·출석부를 보는 곳입니다. ‘진행’을 누르면 그 과정이 시작되고, 진행 중이던 과정의 참가자는 모두 퇴장합니다. 끝난 과정은 ‘보관’으로 치워 두면 목록이 가벼워집니다.</p>
         <div id="crsList"></div>
       </div>
 
@@ -429,6 +435,17 @@
         </div>
       </div></div>
     </div>
+  </section>
+
+  <!-- ══════ 보관 ══════ -->
+  <section class="view" id="vArc">
+    <div class="pane on" id="aList"><div class="inner">
+      <div class="block">
+        <h3>보관한 과정</h3>
+        <p class="desc">관리 목록에서 치워 둔 과정입니다. 질문·출석·퀴즈 기록은 그대로 남아 있고, ‘꺼내기’를 누르면 관리 목록으로 돌아갑니다. 전체 과정 합산에는 보관한 과정도 들어갑니다.</p>
+        <div id="arcList"></div>
+      </div>
+    </div></div>
   </section>
 </div>
 
@@ -580,14 +597,18 @@ onAuthStateChanged(auth, async user => {
 });
 
 /* ══ 모드 · 탭 ══ */
+const MODES = { live:['#mLive','#vLive'], mng:['#mMng','#vMng'], arc:['#mArc','#vArc'] };
 function setMode(m){
-  $('#mLive').classList.toggle('on', m==='live');
-  $('#mMng').classList.toggle('on',  m==='mng');
-  $('#vLive').classList.toggle('on', m==='live');
-  $('#vMng').classList.toggle('on',  m==='mng');
+  for (const [k, [btn, view]] of Object.entries(MODES)){
+    $(btn).classList.toggle('on', k === m);
+    $(view).classList.toggle('on', k === m);
+  }
 }
+// 탭 강조만 바꾼다 — 보관한 과정의 기록을 볼 때 «보관» 탭이 켜져 있도록
+const hiMode = m => { for (const [k, [btn]] of Object.entries(MODES)) $(btn).classList.toggle('on', k === m); };
 $('#mLive').onclick = () => setMode('live');
-$('#mMng').onclick  = () => setMode('mng');
+$('#mMng').onclick  = () => { if (detSid) closeDetail(); setMode('mng'); };
+$('#mArc').onclick  = () => { if (detSid) closeDetail(); setMode('arc'); };
 $('#goMng').onclick = () => setMode('mng');
 
 const wireTabs = (bar) => $$(bar + ' button').forEach(b => b.onclick = () => {
@@ -941,15 +962,22 @@ function drawNotices(obj){
 /* ══ 과정 목록 ══ */
 function renderCourses(){
   const box = $('#crsList'); box.innerHTML='';
-  // 진행 중 → 대기(등록 순 = 하루 시간표 순서) → 끝남(최근 순)
+  renderArchive();
+  // 진행 중 → 대기(등록 순 = 하루 시간표 순서) → 끝남(최근 순). 보관한 과정은 빼고.
   const rank = ([id,c]) => id === activeSid ? 0 : (c.closedAt ? 2 : 1);
-  const list = Object.entries(courses).sort((a,b) => {
+  const list = Object.entries(courses).filter(([,c]) => !c.archived).sort((a,b) => {
     const ra = rank(a), rb = rank(b);
     if (ra !== rb) return ra - rb;
     if (ra === 2) return (b[1].closedAt||0) - (a[1].closedAt||0);
     return (a[1].createdAt||0) - (b[1].createdAt||0);
   });
-  if (!list.length){ box.append(el('div','empty','아직 등록한 과정이 없습니다.\n위에서 과정을 등록해 주세요.')); return; }
+  if (!list.length){
+    const nArc = Object.values(courses).filter(c => c.archived).length;
+    box.append(el('div','empty', nArc
+      ? '관리 중인 과정이 없습니다.\n보관한 과정 ' + nArc + '개는 ‘보관’ 탭에 있습니다.'
+      : '아직 등록한 과정이 없습니다.\n위에서 과정을 등록해 주세요.'));
+    return;
+  }
   for (const [id,c] of list){
     const now = id === activeSid;
     const row = el('div','crs' + (now?' now':''));
@@ -980,8 +1008,60 @@ function renderCourses(){
     };
     const bDel = el('button','btn sm ghost','삭제'); bDel.style.color='var(--danger)';
     bDel.onclick = () => dropCourse(id, c);
-    ops.append(bRec,bRun,bEd,bDel); row.append(ops); box.append(row);
+    ops.append(bRec,bRun,bEd);
+    if (!now){                                         // 진행 중인 과정은 보관할 수 없다
+      const bArc = el('button','btn sm ghost','보관');
+      bArc.onclick = () => archiveCourse(id, c, true);
+      ops.append(bArc);
+    }
+    ops.append(bDel); row.append(ops); box.append(row);
   }
+}
+
+/* ══ 보관 ══
+   지운 게 아니라 관리 목록에서 치워 둔 것. 기록은 그대로 남고 언제든 꺼낼 수 있다. */
+function renderArchive(){
+  const box = $('#arcList'); box.innerHTML = '';
+  const list = Object.entries(courses).filter(([,c]) => c.archived)
+    .sort((a,b) => (b[1].archivedAt||0) - (a[1].archivedAt||0));   // 최근에 보관한 것부터
+  $('#arcCnt').textContent = list.length ? String(list.length) : '';
+  if (!list.length){ box.append(el('div','empty','보관한 과정이 없습니다.\n관리 탭에서 끝난 과정을 ‘보관’하면 여기로 옵니다.')); return; }
+
+  for (const [id,c] of list){
+    const row = el('div','crs arc');
+    row.append(el('span','mark'));
+    const info = el('div','info');
+    info.append(el('div','nm', c.name || '이름 없음'));
+    info.append(el('div','sub', [c.teacher && ('강사 ' + c.teacher), c.when,
+      c.closedAt ? '끝남 ' + full(c.closedAt) : '진행 안 함',
+      c.archivedAt ? '보관 ' + full(c.archivedAt) : null].filter(Boolean).join(' · ')));
+    row.append(info);
+    const num = el('div','num');
+    const st = stats[id] || {};
+    num.append(document.createTextNode('출석 '), el('b',null,String(st.ppl||0)),
+               document.createTextNode(' · 질문 '), el('b',null,String(st.q||0)));
+    row.append(num);
+
+    const ops = el('div','ops');
+    const bRec = el('button','btn sm ghost','기록');
+    bRec.onclick = () => openDetail(id, 'arc');
+    const bOut = el('button','btn sm primary','꺼내기');
+    bOut.onclick = () => archiveCourse(id, c, false);
+    const bDel = el('button','btn sm ghost','삭제'); bDel.style.color='var(--danger)';
+    bDel.onclick = () => dropCourse(id, c);
+    ops.append(bRec, bOut, bDel); row.append(ops); box.append(row);
+  }
+}
+
+async function archiveCourse(id, c, on){
+  if (on && id === activeSid) return toast('진행 중인 과정은 보관할 수 없습니다');
+  try{
+    await update(ref(db,`sessions/${id}`), on
+      ? { archived: true,  archivedAt: serverTimestamp() }
+      : { archived: null,  archivedAt: null });
+  } catch(e){ return toast((on ? '보관하지' : '꺼내지') + ' 못했습니다: ' + (e.code||e.message)); }
+  toast(on ? `〈${c.name||'과정'}〉을 보관했습니다 — 보관 탭에서 꺼낼 수 있습니다`
+           : `〈${c.name||'과정'}〉을 관리 목록으로 꺼냈습니다`);
 }
 
 $('#crsAdd').onclick = async () => {
@@ -1170,19 +1250,23 @@ function showDetail(on){
   $('#mDetail').classList.toggle('on', on);
   $('#mDetail').style.display = on ? 'flex' : 'none';
 }
-function backToList(){
+let detFrom = 'mng';                                  // 상세를 연 곳 — 관리 또는 보관
+function closeDetail(){
   detOff.forEach(f=>f()); detOff=[]; detSid=null; detMsgs={}; detRoster={}; allAttend={}; detQuizHits={};
   showDetail(false);
 }
+function backToList(){ closeDetail(); setMode(detFrom); }
 $('#backList').onclick = backToList;
 
-function openDetail(id){
+function openDetail(id, from = 'mng'){
+  detFrom = from;
   detOff.forEach(f=>f()); detOff=[];
   detSid = id; detMsgs={}; detRoster={}; allAttend={}; detQuizHits={};
   const agg = id === ALL, c = courses[id] || {};
   $('#dTitle').textContent = agg ? '전체 과정 합산' : (c.name || '이름 없음');
-  $('#dSub').textContent   = agg ? '모든 과정의 출석을 사번 기준으로 합쳤습니다'
-    : [c.when, c.startedAt ? full(c.startedAt) : null, id === activeSid ? '진행 중' : (c.closedAt ? '끝남' : '대기')].filter(Boolean).join(' · ');
+  $('#dSub').textContent   = agg ? '모든 과정의 출석을 사번 기준으로 합쳤습니다 (보관한 과정 포함)'
+    : [c.when, c.startedAt ? full(c.startedAt) : null, id === activeSid ? '진행 중' : (c.closedAt ? '끝남' : '대기'),
+       c.archived ? '보관함' : null].filter(Boolean).join(' · ');
   $('#dCLbl').textContent  = agg ? '과정 수' : '누적 질문';
   $('#dAllLbl').textContent= agg ? '참여자(중복 제외)' : '출석 인원';
   $('#detTabs').style.display = agg ? 'none' : 'flex';
@@ -1191,7 +1275,7 @@ function openDetail(id){
     b.classList.toggle('on', !agg && first);
     $('#'+b.dataset.p).classList.toggle('on', agg ? b.dataset.p === 'dr' : first);
   });
-  showDetail(true); setMode('mng');
+  showDetail(true); setMode('mng'); hiMode(detFrom);
   drawDetQ(); drawDetRoster(); drawDetStats(); renderQuizRec($('#dzList'), {});
 
   if (agg){
