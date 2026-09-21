@@ -50,6 +50,11 @@
   .top .t{flex:1;min-width:0}
   .top .t .eyebrow{display:block;margin-bottom:3px}
   .top .t strong{font-size:17px;font-weight:700;letter-spacing:-.02em;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* 연결이 끊겼을 때만 나타나는 배지 — 평소엔 상단을 비워 둔다 */
+  .netpill{display:none;flex:0 0 auto;align-items:center;gap:7px;font-size:12px;font-weight:600;color:var(--danger);
+    background:#FBECE8;border:1px solid rgba(180,67,43,.35);border-radius:20px;padding:5px 11px}
+  .netpill.down{display:inline-flex}
+  .netpill.down::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--danger)}
   .modes{display:flex;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:3px;gap:3px;flex:0 0 auto}
   .modes button{padding:8px 15px;border-radius:7px;font-size:13.5px;font-weight:600;color:var(--muted);transition:.15s}
   .modes button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(26,30,43,.1)}
@@ -94,6 +99,14 @@
   .inline{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
   .inline input,.inline select{flex:1;min-width:150px;padding:11px 13px;background:var(--paper);border:1px solid var(--line);border-radius:10px;outline:none}
   .inline input:focus{border-color:var(--accent);background:var(--card)}
+  /* 입장코드 칸 — 입력과 «자동» 버튼을 한 몸으로 붙인다 */
+  .inline .codefield{display:flex;align-items:stretch;min-width:0}
+  .inline .codefield input{flex:1;min-width:0;border-right:none;border-radius:10px 0 0 10px;
+    font-family:var(--mono);letter-spacing:.16em;text-transform:uppercase}
+  .inline .codefield button{flex:0 0 auto;padding:0 15px;border:1px solid var(--line);border-radius:0 10px 10px 0;
+    background:var(--card);color:var(--accent);font-size:13px;font-weight:700;white-space:nowrap;transition:.15s}
+  .inline .codefield button:hover{background:var(--accent-soft)}
+  .inline .codefield input:focus + button{border-color:var(--accent)}
   textarea.note{width:100%;min-height:92px;resize:vertical;padding:13px 14px;background:var(--paper);border:1px solid var(--line);border-radius:10px;outline:none;line-height:1.6}
   textarea.note:focus{border-color:var(--accent);background:var(--card)}
   .links{display:flex;gap:9px;flex-wrap:wrap}
@@ -240,6 +253,7 @@
       <span class="eyebrow">Study Class</span>
       <strong>운영 관리</strong>
     </div>
+    <span class="netpill" id="tState">연결 끊김 · 다시 연결 중</span>
     <div class="modes">
       <button id="mLive" class="on">진행 중<span class="badge" id="liveDot"></span></button>
       <button id="mMng">관리</button>
@@ -365,7 +379,10 @@
           <input id="crsName" placeholder="과정 이름 (예: 09:00 안전리더십 1조)" maxlength="60" style="flex:3 1 100%" />
           <input id="crsTeacher" placeholder="강사 (예: 정인혁 책임)" maxlength="30" style="flex:1 1 150px" />
           <input id="crsWhen" placeholder="일시 메모 (예: 8/28 오전)" maxlength="30" style="flex:1 1 130px" />
-          <input id="crsCode" class="mono" placeholder="입장코드 (비우면 없음)" maxlength="4" style="flex:1 1 170px;text-transform:uppercase" />
+          <div class="codefield" style="flex:1 1 200px">
+            <input id="crsCode" placeholder="입장코드 (비우면 없음)" maxlength="4" autocomplete="off" />
+            <button type="button" id="crsGen" title="헷갈리는 글자(0·1·I·O)를 뺀 4자리를 뽑습니다">자동</button>
+          </div>
           <button class="btn" id="crsAdd" style="flex:0 0 auto">등록</button>
         </div>
       </div>
@@ -468,7 +485,10 @@
       <input id="edName" placeholder="과정 이름" maxlength="60" style="flex:1 1 100%" />
       <input id="edTeacher" placeholder="강사" maxlength="30" style="flex:1 1 140px" />
       <input id="edWhen" placeholder="일시 메모" maxlength="30" style="flex:1 1 120px" />
-      <input id="edCode" class="mono" placeholder="입장코드" maxlength="4" style="flex:1 1 120px;text-transform:uppercase" />
+      <div class="codefield" style="flex:1 1 170px">
+        <input id="edCode" placeholder="입장코드" maxlength="4" autocomplete="off" />
+        <button type="button" id="edGen" title="헷갈리는 글자(0·1·I·O)를 뺀 4자리를 뽑습니다">자동</button>
+      </div>
     </div>
     <div class="btns">
       <button class="btn ghost" id="edNo">취소</button>
@@ -541,6 +561,13 @@ function ask(title, body, yes='확인', danger=false){
 const CODE_CHARS = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
 const rndCode = () => Array.from({length:4}, () => CODE_CHARS[Math.floor(Math.random()*CODE_CHARS.length)]).join('');
 const cleanCode = v => String(v||'').toUpperCase().replace(/[^23456789ABCDEFGHJKLMNPQRSTUVWXYZ]/g,'').slice(0,4);
+// 과정을 등록할 때도, 고칠 때도 같은 방식으로 뽑는다
+function bindCodeField(inp, btn){
+  inp.addEventListener('input', () => { inp.value = cleanCode(inp.value); });   // 0·1·I·O는 치는 즉시 걸러짐
+  btn.onclick = () => { inp.value = rndCode(); inp.focus(); };
+}
+bindCodeField($('#crsCode'), $('#crsGen'));
+bindCodeField($('#edCode'),  $('#edGen'));
 function edit(name, when, teacher, code){
   return new Promise(res => {
     $('#edName').value=name||''; $('#edWhen').value=when||''; $('#edTeacher').value=teacher||''; $('#edCode').value=code||'';
@@ -632,8 +659,7 @@ function boot(){
   onValue(ref(db,'.info/connected'), s => {
     __net = s.val() === true;
     $('#tState').classList.toggle('down', !__net);
-    if (!__net) $('#tState').textContent = '연결 끊김';
-    else applyConfig();
+    if (__net) applyConfig();
   });
   onValue(ref(db,'config'),   s => { cfg = s.val()||{};     applyConfig(); });
   onValue(ref(db,'sessions'), s => { courses = s.val()||{}; applyConfig(); renderCourses(); });
@@ -1083,6 +1109,7 @@ async function closeActive(){
   const prev = courses[activeSid] || {};
   await update(ref(db,`sessions/${activeSid}`), { closedAt: serverTimestamp() });
   await remove(ref(db,`presence/${activeSid}`));
+  await remove(ref(db,`teachNote/${activeSid}`)).catch(()=>{});   // 앞 시간 쪽지가 다시 진행할 때 되살아나지 않게
   const st = stats[activeSid] || {};
   return { sid: activeSid, name: prev.name || '', at: Date.now(), ppl: st.ppl || 0, q: st.q || 0 };
 }
