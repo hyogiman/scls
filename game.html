@@ -45,7 +45,7 @@ button{font:inherit}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .btn{border:0;border-radius:999px;padding:14px 28px;min-height:48px;background:var(--accent);color:var(--accent-ink);font-family:var(--sans);font-size:16px;font-weight:700;cursor:pointer}
 .btn.ghost{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--line)}
-.btn:focus-visible,.choice:focus-visible,.sil:focus-visible{outline:3px solid var(--mystery);outline-offset:3px}
+.btn:focus-visible,.choice:focus-visible,.pickc:focus-visible{outline:3px solid var(--mystery);outline-offset:3px}
 
 /* 시작 화면 */
 #title.on{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:28px 28px 36px;text-align:center;overflow-y:auto}
@@ -58,15 +58,27 @@ button{font:inherit}
 .subtitle{font-family:var(--serif);font-size:17px;color:var(--muted);margin:0 0 10px}
 .note{font-size:14px;line-height:1.7;color:var(--muted);margin:6px 0 0}
 
-/* 공략 대상 선택 */
-#pick{background:linear-gradient(#19213f,#2b2446);color:#EEF0F7}
-#pick.on{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;padding:32px 20px;overflow-y:auto}
-#pick h2{font-family:var(--serif);font-size:24px;font-weight:700;margin:0;text-align:center}
-.sils{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;width:100%;max-width:380px}
-.sil{display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 10px 12px;border:1px solid rgba(255,255,255,.14);border-radius:90px 90px 14px 14px;background:rgba(255,255,255,.04);color:inherit;cursor:pointer}
-.sil svg{width:82%;height:auto;max-height:26vh}
-.sil span{font-family:var(--serif);font-size:18px;letter-spacing:.3em;padding-left:.3em;color:#BBAFF6}
-.sil:active{background:rgba(160,140,245,.14)}
+/* 주인공 선택 */
+#who{background:linear-gradient(#19213f,#2b2446);color:#EEF0F7}
+#who.on{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;padding:32px 22px;overflow-y:auto;text-align:center}
+#who h2{font-family:var(--serif);font-size:24px;font-weight:700;margin:0}
+.picks{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;width:100%;max-width:360px}
+.pickc{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:200px;padding:18px 10px;border:1px solid rgba(255,255,255,.16);border-radius:90px 90px 16px 16px;background:rgba(255,255,255,.05);color:inherit;cursor:pointer}
+.pickc span{font-family:var(--serif);font-size:30px;font-weight:700}
+.pickc small{font-size:14px;color:#BBAFF6}
+.pickc:active{background:rgba(160,140,245,.16)}
+#who .hint{margin:0;font-size:14px;line-height:1.7;color:#AEB5CB}
+
+/* 공략 대상 소개 */
+#meet{background:radial-gradient(120% 70% at 50% 18%,#3b2f55 0%,#19213f 72%);color:#EEF0F7}
+#meet.on{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:28px 24px;overflow-y:auto;text-align:center}
+#meet .mk{margin:0;font-size:14px;color:#BBAFF6}
+.portrait{display:flex;align-items:flex-end;justify-content:center;width:min(54%,210px);aspect-ratio:200/262;overflow:hidden;border:1px solid rgba(255,255,255,.16);border-radius:110px 110px 18px 18px;background:radial-gradient(circle at 50% 42%,rgba(240,165,76,.34),rgba(240,165,76,0) 70%),rgba(255,255,255,.05)}
+.portrait svg{display:block;width:100%;height:auto}
+#meet h2{margin:2px 0 0;font-family:var(--serif);font-size:34px;font-weight:700}
+.profile{margin:0;padding:0;list-style:none;font-size:15px;line-height:1.8;color:#D6DAE7}
+.profile b{margin-right:6px;color:#F0A54C}
+.heart{margin:0 0 6px;font-size:15px;color:#F0A54C}
 
 /* 이야기 화면 */
 #play{background:#10131f;cursor:pointer;touch-action:manipulation;-webkit-user-select:none;user-select:none}
@@ -80,6 +92,20 @@ button{font:inherit}
 .pips{display:flex;gap:4px}
 .pips i{display:block;width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.28)}
 .pips i.done{background:#F0A54C}
+#tchip{position:absolute;top:12px;right:12px;z-index:3;display:flex;align-items:center;gap:6px;padding:7px 12px;border-radius:999px;background:rgba(14,17,30,.55);color:#EEF0F7;font-size:13px}
+#tchip .tl{color:#AEB5CB}
+#tchip b{font-weight:700}
+#tchip .th{font-weight:700;color:#F0A54C}
+#tchip.flip b{color:#F0A54C}
+#quad{position:absolute;left:14px;right:14px;top:58px;bottom:178px;z-index:2;display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;border-radius:22px;background:rgba(10,12,24,.64);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+#quad.on{display:flex}
+#quad .qcap{margin:0;font-family:var(--serif);font-size:15px;color:#BBAFF6}
+.qgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:6px 18px;width:min(76%,290px)}
+.qcell{display:flex;flex-direction:column;align-items:center;transition:opacity .6s ease}
+.qcell svg{display:block;width:100%;height:auto;max-height:21vh}
+.qcell span{font-family:var(--serif);font-size:14px;letter-spacing:.3em;padding-left:.3em;color:#BBAFF6}
+#quad.lit .qcell{opacity:.3}
+#quad.lit .qcell.me{opacity:1}
 #dialog{position:absolute;left:10px;right:10px;bottom:10px;z-index:4;min-height:146px;padding:26px 20px 30px;border-radius:22px 22px 22px 6px;background:rgba(14,17,32,.88);color:#EEF0F7;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
 #name{position:absolute;top:-15px;left:16px;display:none;padding:5px 14px 6px;border-radius:12px 12px 12px 3px;background:#F0A54C;color:#1A2236;font-size:14px;font-weight:700}
 #name.on{display:block}
@@ -119,6 +145,10 @@ button{font:inherit}
 #ending .lines p{margin:0 0 6px;font-family:var(--serif);font-size:17px;line-height:1.8;word-break:keep-all;opacity:0;animation:rise .8s ease forwards}
 #ending .closing{margin:12px 0 6px;font-family:var(--serif);font-size:18px;line-height:1.7;color:#F0A54C;word-break:keep-all;opacity:0;animation:rise .8s ease forwards}
 #ending .btn{opacity:0;animation:rise .6s ease forwards}
+#ending .emsg{display:flex;gap:10px;align-items:flex-start;width:100%;max-width:340px;margin:8px 0 6px;padding:10px 12px;border-radius:16px;background:rgba(248,249,252,.96);color:#1A2236;text-align:left;opacity:0;animation:rise .8s ease forwards}
+#ending .emsg .av{flex:0 0 34px;height:34px;border-radius:10px;display:grid;place-items:center;background:#D9862E;color:#fff;font-weight:700;font-size:15px}
+#ending .emsg .from{margin:0 0 2px;font-size:12px;font-weight:700}
+#ending .emsg .body{font-size:14.5px;line-height:1.5;word-break:keep-all}
 @keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 
 /* 회상 */
@@ -173,7 +203,7 @@ button{font:inherit}
 
 @media (prefers-reduced-motion: reduce){
   *,*::before,*::after{animation:none!important;transition:none!important}
-  #ending .lines p,#ending .closing,#ending .btn{opacity:1}
+  #ending .lines p,#ending .closing,#ending .btn,#ending .emsg{opacity:1}
 }
 </style>
 </head>
@@ -187,15 +217,30 @@ button{font:inherit}
     <p class="note">정답은 없어요. 가장 나다운 선택을 골라 주세요.<br>15분쯤 걸려요.</p>
   </section>
 
-  <section id="pick" class="screen" aria-label="공략 대상 선택">
-    <h2>공략 대상을 선택하세요</h2>
-    <div class="sils" id="sils"></div>
+  <section id="who" class="screen" aria-label="주인공 선택">
+    <h2>주인공을 선택하세요</h2>
+    <div class="picks">
+      <button class="pickc" type="button" data-g="m"><span>남자</span><small>주인공</small></button>
+      <button class="pickc" type="button" data-g="f"><span>여자</span><small>주인공</small></button>
+    </div>
+    <p class="hint">고른 주인공에 따라<br>1년을 함께할 사람이 정해집니다.</p>
+  </section>
+
+  <section id="meet" class="screen" aria-label="공략 대상">
+    <p class="mk">이번 1년, 당신의 공략 대상</p>
+    <div class="portrait" id="portrait"></div>
+    <h2>지우</h2>
+    <ul class="profile"><li>대학 동기이자 같은 동네 친구</li><li><b>좋아하는 것</b>솔직한 사람, 클라이밍, 늦잠</li></ul>
+    <p class="heart">호감도 ♥ ???</p>
+    <button class="btn" id="btnBegin" type="button">1년 시작하기</button>
   </section>
 
   <section id="play" class="screen" aria-label="이야기">
     <div id="bg"></div>
     <div id="sprite"></div>
     <div id="chip"><span id="chipText">프롤로그</span><span class="pips" id="pips"></span></div>
+    <div id="tchip"><span class="tl">공략 중</span><b id="tname">지우</b><span class="th" id="theart">♥ ???</span></div>
+    <div id="quad"><p class="qcap" id="qcap">가능했던 1년 뒤의 나</p><div class="qgrid" id="qgrid"></div></div>
     <div id="msg"><div class="av" id="msgAv">?</div><div><div class="from" id="msgFrom"></div><div class="body" id="msgBody"></div></div></div>
     <div id="dialog"><div id="name"></div><p id="text"></p><span id="next" aria-hidden="true"></span></div>
     <div id="monthcard"><div class="big" id="mcBig"></div><div class="sub" id="mcSub"></div><div class="tap">화면을 누르면 계속돼요</div></div>
@@ -309,11 +354,12 @@ const CLOSING = '이 1년은 아직 오지 않았다. 그러니, 다시 고를 �
 /* ───────── 대본 ───────── */
 const N = (text, extra) => Object.assign({ t: 'narr', text }, extra || {});
 const J = (face, text) => ({ t: 'say', who: 'jiwoo', face, text });
-const F = (text) => ({ t: 'say', who: 'future', text });
+const F = (text, extra) => Object.assign({ t: 'say', who: 'future', text }, extra || {});
 const MSG = (from, text, kind) => ({ t: 'msg', from, text, kind: kind || 'unknown' });
 const MONTH = (big, sub, bg, scene) => ({ t: 'month', big, sub, bg, scene });
 const CHOICE = (id) => ({ t: 'choice', id });
 
+// 선택 직후 지우의 반응은 어떤 선택을 해도 같다(점수가 드러나지 않게).
 const SCRIPT = [
   N('회사에서의 당신에게는 팀장이 있다.', { bg: 'prologue' }),
   N('정해진 일정이 있고, 마감이 있고, 해야 할 일이 있다.'),
@@ -321,14 +367,19 @@ const SCRIPT = [
   N('이건 그 시간에 관한 이야기다.'),
   N('1월 1일, 새해 첫날 밤.', { bg: 'jan' }),
   J('smile', '새해 복 많이 받아! 올해는 우리 뭐든 같이 해 보자.'),
-  N('지우. 대학 동기이자 같은 동네 친구. 뭐든 같이 해 보자고 먼저 연락하는 사람.'),
+  N('지우. 대학 동기이자 같은 동네 친구. 요즘 들어 연락이 부쩍 잦아졌다.'),
+  J('neutral', '아, 그리고 하나만.'),
+  J('smile', '나한테 잘 보이려고 애쓰지 마. 꾸민 너보다 솔직한 네가 훨씬 좋거든.'),
+  N('…심장이 조금 빨리 뛰었다.', { sprite: false }),
   MSG('알 수 없는 번호', '올해 너의 선택 여덟 개를 지켜볼게.'),
-  N('…누구지?', { sprite: false }),
+  N('…누구지?'),
 
   MONTH('1월', '새해 결심 2주째, 화요일 저녁 7시', 'jan', 1),
   J('tease', '너 새해부터 주 3회 운동한다며? 오늘 화요일인데~'),
   N('결심한 지 2주째. 오늘따라 소파가 유난히 푹신하다.'),
+  J('smile', '고민하지 말고, 평소의 너대로 해.'),
   CHOICE(1),
+  J('smile', '역시, 너답다.'),
   N('그렇게 1월이 지나갔다.', { sprite: false }),
 
   MONTH('3월', '기타를 배운 지 석 달', 'mar', 2),
@@ -336,20 +387,23 @@ const SCRIPT = [
   N('그런데 몇 주째 같은 구간에서 손가락이 꼬인다.'),
   J('neutral', '요즘 기타 소리가 안 들리던데? 그 곡은 다 쳤어?'),
   CHOICE(2),
+  J('smile', '나중에 나한테도 한 곡 쳐 줘. 틀려도 괜찮으니까.'),
   N('벚꽃이 피었다가, 졌다.', { sprite: false }),
   MSG('알 수 없는 번호', '그 선택, 기억해 둘게.'),
 
   MONTH('5월', '사흘 연속 빨간 날', 'may', 3),
   N('달력에 빨간 날이 사흘 이어져 있다. 아직 아무 계획이 없다.'),
   J('smile', '너 연휴에 뭐 해? 난 일단 늦잠부터 잘 거야.'),
+  J('tease', '…심심하면 연락해. 나 은근 한가하거든.'),
   CHOICE(3),
-  N('그렇게 연휴가 지나갔다.', { sprite: false }),
+  N('연휴 마지막 날 밤, 지우에게서 노을 사진이 한 장 왔다.', { sprite: false }),
 
   MONTH('6월', '한 달 걷기 챌린지 마지막 날', 'jun', 4),
   N('포인트를 주는 \'한 달 걷기 챌린지\' 덕분에, 한 달 내내 매일 걸었다.'),
   MSG('걷기 챌린지', '챌린지가 끝났어요. 그동안 수고하셨습니다!', 'sys'),
   J('neutral', '그거 끝났지? 이제 안 걸어?'),
   CHOICE(4),
+  J('tease', '나도 요즘 저녁마다 걷는데. …아니, 그냥 그렇다고.'),
   N('여름이 가까워졌다.', { sprite: false }),
   MSG('알 수 없는 번호', '벌써 반이 지났네.'),
 
@@ -358,6 +412,7 @@ const SCRIPT = [
   MSG('캠핑장', '기상 악화로 오늘 예약이 취소되었습니다.', 'sys'),
   J('worry', '아… 망했다. 오늘 뭐 하냐.'),
   CHOICE(5),
+  J('smile', '다음엔 꼭 가자. 약속.'),
   N('비는 저녁까지 그치지 않았다.', { sprite: false }),
 
   MONTH('9월', '처음 가 본 클라이밍장', 'sep', 6),
@@ -365,6 +420,7 @@ const SCRIPT = [
   N('다들 가볍게 오르는 초록색 코스. 나만 세 번째 홀드에서 계속 떨어진다.'),
   J('smile', '괜찮아? 처음엔 다 그래~'),
   CHOICE(6),
+  J('smile', '오늘 같이 와 줘서 좋았어.'),
   N('손바닥에 남은 초크 자국이 며칠 갔다.', { sprite: false }),
   MSG('알 수 없는 번호', '거의 다 왔어.'),
 
@@ -373,6 +429,7 @@ const SCRIPT = [
   N('처음엔 모임 날이 기다려졌는데, 요즘은 책을 숙제처럼 읽는다.'),
   J('worry', '이번 달 책 다 읽었어? 난 반도 못 읽었어…'),
   CHOICE(7),
+  J('tease', '솔직하게 말해 주는 거, 그게 너의 제일 좋은 점이야.'),
   N('은행잎이 노랗게 물들었다.', { sprite: false }),
 
   MONTH('12월', '새벽 1시', 'dec', 8),
@@ -380,18 +437,21 @@ const SCRIPT = [
   MSG('지우', '아직 안 자? ㅋㅋ 나도 ㅋㅋ', 'known'),
   N('오늘도 벌써 새벽 1시다.'),
   CHOICE(8),
+  MSG('지우', '잘 자. 내일 또 얘기하자.', 'known'),
   N('그렇게, 1년이 끝났다.'),
   MSG('알 수 없는 번호', '1월에 만나. 그때 알게 될 거야.'),
 
   MONTH('다시, 1월', '1년 뒤', 'cafe', 'end'),
   MSG('알 수 없는 번호', '오늘 저녁 7시. 동네 카페, 창가 자리.'),
+  N('혹시 지우일까. 괜히 거울을 한 번 더 보고 나왔다.'),
   N('창가 자리에 낯익은 뒷모습이 앉아 있다.'),
   N('그 사람이 천천히 돌아본다.'),
   F('…왔구나.'),
-  N('그 얼굴은, 나였다.'),
-  F('처음에 고를 수 없었던 공략 대상, 기억나?'),
-  F('그 넷은 전부, 1년 뒤의 너였어.'),
-  F('그리고 네 선택 여덟 개가… 나를 골랐지.'),
+  N('지우가 아니었다. 그 얼굴은, 나였다.'),
+  F('지우를 공략하는 줄 알았지?'),
+  F('이 1년 동안 네가 공략한 건, 처음부터 너 자신이었어.', { reveal: true }),
+  F('1년 전, 네 앞에는 이런 내가 넷 있었어.', { quad: 'dark' }),
+  F('그리고 네 선택 여덟 개가… 나를 골랐지.', { quad: 'lit' }),
   { t: 'ending' }
 ];
 
@@ -402,13 +462,15 @@ function rng(seed) {
   return () => (s = s * 16807 % 2147483647) / 2147483647;
 }
 
-function svgJiwoo(face) {
-  const skin = '#F2D2B6', hair = '#3B2B23', top = '#E3A33F', ink = '#2A1F1A', lip = '#8A4334';
+function svgJiwoo(face, g) {
+  const male = g === 'M';
+  const skin = '#F2D2B6', hair = '#3B2B23', ink = '#2A1F1A', lip = '#8A4334';
+  const top = male ? '#4F7C6A' : '#E3A33F', collar = male ? '#E3EDE7' : '#F6E7C8', bw = male ? 3.8 : 3.2;
   const eyeOpen = `<ellipse cx="82" cy="116" rx="4.6" ry="6" fill="${ink}"/><ellipse cx="118" cy="116" rx="4.6" ry="6" fill="${ink}"/><circle cx="83.6" cy="113.6" r="1.5" fill="#fff"/><circle cx="119.6" cy="113.6" r="1.5" fill="#fff"/>`;
   const eyeHappy = `<path d="M76 117 q6 -8 12 0 M112 117 q6 -8 12 0" fill="none" stroke="${ink}" stroke-width="3.2" stroke-linecap="round"/>`;
-  const browN = `<path d="M73 101 q9 -5 18 0 M109 101 q9 -5 18 0" fill="none" stroke="${hair}" stroke-width="3.2" stroke-linecap="round"/>`;
-  const browW = `<path d="M73 104 q9 -3 18 -7 M109 97 q9 4 18 7" fill="none" stroke="${hair}" stroke-width="3.2" stroke-linecap="round"/>`;
-  const browT = `<path d="M73 102 q9 -4 18 0 M109 98 q9 -7 18 -2" fill="none" stroke="${hair}" stroke-width="3.2" stroke-linecap="round"/>`;
+  const browN = `<path d="M73 101 q9 -5 18 0 M109 101 q9 -5 18 0" fill="none" stroke="${hair}" stroke-width="${bw}" stroke-linecap="round"/>`;
+  const browW = `<path d="M73 104 q9 -3 18 -7 M109 97 q9 4 18 7" fill="none" stroke="${hair}" stroke-width="${bw}" stroke-linecap="round"/>`;
+  const browT = `<path d="M73 102 q9 -4 18 0 M109 98 q9 -7 18 -2" fill="none" stroke="${hair}" stroke-width="${bw}" stroke-linecap="round"/>`;
   const mouth = {
     smile: `<path d="M88 135 q12 13 24 0" fill="none" stroke="${lip}" stroke-width="3" stroke-linecap="round"/>`,
     tease: `<path d="M90 138 q11 7 22 -4" fill="none" stroke="${lip}" stroke-width="3" stroke-linecap="round"/>`,
@@ -417,15 +479,21 @@ function svgJiwoo(face) {
   };
   const eyes = face === 'smile' ? eyeHappy : eyeOpen;
   const brows = face === 'worry' ? browW : face === 'tease' ? browT : browN;
+  const backHair = male ? '' : `<path d="M42 116 C38 64 70 42 100 42 C130 42 162 64 158 116 C160 156 166 196 152 216 L48 216 C34 196 40 156 42 116 Z" fill="${hair}"/>`;
+  const strands = male ? '' : `<path d="M50 146 C46 176 50 202 66 224 C70 212 68 194 66 178 C64 164 64 154 65 146 Z" fill="${hair}"/><path d="M150 146 C154 176 150 202 134 224 C130 212 132 194 134 178 C136 164 136 154 135 146 Z" fill="${hair}"/>`;
+  const ears = male ? `<ellipse cx="55" cy="118" rx="7" ry="10" fill="${skin}"/><ellipse cx="145" cy="118" rx="7" ry="10" fill="${skin}"/>` : '';
+  const frontHair = male
+    ? `<path d="M53 110 C50 66 76 46 102 46 C130 46 152 66 149 106 C146 98 141 92 134 88 C124 94 106 96 88 90 C78 94 64 100 53 110 Z" fill="${hair}"/><rect x="55" y="102" width="6" height="16" rx="3" fill="${hair}"/><rect x="139" y="102" width="6" height="16" rx="3" fill="${hair}"/>`
+    : `<path d="M53 112 C53 70 79 54 104 56 C130 58 149 76 147 110 C138 94 123 84 105 86 C89 88 72 97 53 112 Z" fill="${hair}"/><rect x="118" y="74" width="17" height="5" rx="2.5" fill="#F6E7C8" transform="rotate(-22 126 76)"/>`;
   return `<svg viewBox="0 0 200 262" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-<path d="M44 120 C40 70 70 44 100 44 C130 44 160 70 156 120 C156 150 150 166 140 174 L60 174 C50 166 44 150 44 120 Z" fill="${hair}"/>
-<rect x="88" y="152" width="24" height="34" rx="9" fill="${skin}"/>
+${backHair}
+<rect x="${male ? 87 : 88}" y="152" width="${male ? 26 : 24}" height="34" rx="9" fill="${skin}"/>
 <path d="M28 262 C28 214 56 188 100 186 C144 188 172 214 172 262 Z" fill="${top}"/>
-<path d="M78 192 Q100 210 122 192" fill="none" stroke="#F6E7C8" stroke-width="6" stroke-linecap="round"/>
-<ellipse cx="53" cy="118" rx="7" ry="10" fill="${skin}"/><ellipse cx="147" cy="118" rx="7" ry="10" fill="${skin}"/>
-<ellipse cx="100" cy="112" rx="46" ry="50" fill="${skin}"/>
-<path d="M53 110 C55 70 80 56 104 58 C128 59 148 76 148 108 C137 92 121 84 104 86 C88 88 72 96 53 110 Z" fill="${hair}"/>
-<ellipse cx="73" cy="132" rx="7" ry="4" fill="#E88B7A" opacity=".35"/><ellipse cx="127" cy="132" rx="7" ry="4" fill="#E88B7A" opacity=".35"/>
+<path d="M78 192 Q100 210 122 192" fill="none" stroke="${collar}" stroke-width="6" stroke-linecap="round"/>
+${strands}${ears}
+<ellipse cx="100" cy="112" rx="${male ? 44 : 45}" ry="50" fill="${skin}"/>
+${frontHair}
+<ellipse cx="73" cy="132" rx="7" ry="4" fill="#E88B7A" opacity="${male ? 0.22 : 0.35}"/><ellipse cx="127" cy="132" rx="7" ry="4" fill="#E88B7A" opacity="${male ? 0.22 : 0.35}"/>
 ${brows}${eyes}${mouth[face] || mouth.neutral}
 </svg>`;
 }
@@ -674,14 +742,16 @@ function bgSVG(key) {
 /* ───────── 진행 ───────── */
 const $ = (id) => document.getElementById(id);
 const REDUCED = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-const KEY = 'eoneu-1nyeon-v1';
-let state = { i: 0, choices: {}, done: false };
+const KEY = 'eoneu-1nyeon-v2';
+let state = { i: 0, choices: {}, done: false, g: null };
 let typing = false, typeTimer = null, fullText = '', curBg = null, lastStepAt = 0;
 
 function esc(s) {
   return String(s).replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
 }
-function fresh() { return { i: 0, choices: {}, done: false }; }
+function fresh(g) { return { i: 0, choices: {}, done: false, g: g || null }; }
+// 주인공이 남자면 지우는 여자(F), 여자면 남자(M)
+function comp() { return state.g === 'f' ? 'M' : 'F'; }
 function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* 저장할 수 없는 환경이면 건너뜀 */ } }
 function load() {
   try {
@@ -689,7 +759,7 @@ function load() {
     if (!raw) return null;
     const s = JSON.parse(raw);
     if (!s || typeof s.i !== 'number' || s.i < 0 || s.i >= SCRIPT.length || typeof s.choices !== 'object' || s.choices === null) return null;
-    return { i: Math.floor(s.i), choices: s.choices, done: !!s.done };
+    return { i: Math.floor(s.i), choices: s.choices, done: !!s.done, g: (s.g === 'm' || s.g === 'f') ? s.g : 'm' };
   } catch (e) { return null; }
 }
 function clearSave() { try { localStorage.removeItem(KEY); } catch (e) { /* 건너뜀 */ } }
@@ -736,22 +806,15 @@ function buildRing() {
   dots.forEach((d, k) => setTimeout(() => d.classList.add('lit'), 400 + k * 170));
 }
 
-function buildPick() {
-  const box = $('sils');
-  box.innerHTML = '';
-  LEVELS.forEach((lv) => {
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.className = 'sil';
-    b.setAttribute('aria-label', '알 수 없는 공략 대상');
-    b.innerHTML = svgFuture(lv.prop, 'dark') + '<span>???</span>';
-    b.addEventListener('click', () => openModal(
-      '아직은 고를 수 없어요',
-      '당신의 1년이 정합니다.\n여덟 번의 선택이 끝나면, 이 중 한 사람을 만나게 됩니다.',
-      [{ label: '1년 시작하기', onClick: startPlay }]
-    ));
-    box.appendChild(b);
+function buildWho() {
+  document.querySelectorAll('.pickc').forEach((b) => {
+    b.addEventListener('click', () => {
+      state = fresh(b.dataset.g);
+      $('portrait').innerHTML = svgJiwoo('smile', comp());
+      showScreen('meet');
+    });
   });
+  $('btnBegin').addEventListener('click', startPlay);
 }
 
 function bgAt(i) { for (let k = i; k >= 0; k--) if (SCRIPT[k].bg) return SCRIPT[k].bg; return 'prologue'; }
@@ -771,6 +834,26 @@ function chipAt(i) {
   return '프롤로그';
 }
 
+function revealedAt(i) { for (let k = i; k >= 0; k--) if (SCRIPT[k].reveal) return true; return false; }
+function setTarget() {
+  const rev = revealedAt(state.i);
+  $('tname').textContent = rev ? '나' : '지우';
+  $('theart').textContent = rev ? '♥' : '♥ ???';
+  $('tchip').classList.toggle('flip', rev);
+}
+function setQuad(mode) {
+  const q = $('quad');
+  if (!mode) { q.classList.remove('on'); return; }
+  const r = computeResult();
+  $('qgrid').innerHTML = LEVELS.map((lv, idx) => {
+    const me = mode === 'lit' && idx === r.lv;
+    return `<div class="qcell${me ? ' me' : ''}">${svgFuture(lv.prop, me ? 'lit' : 'dark')}<span>???</span></div>`;
+  }).join('');
+  $('qcap').textContent = mode === 'lit' ? '네 선택이 고른 1년 뒤의 나' : '가능했던 1년 뒤의 나';
+  q.classList.toggle('lit', mode === 'lit');
+  q.classList.add('on');
+}
+
 function setBg(key) {
   if (key === curBg) return;
   curBg = key;
@@ -783,9 +866,9 @@ function setSprite(sp) {
   const el = $('sprite');
   if (!sp) { el.classList.remove('on'); return; }
   const lv = sp.kind === 'future' ? currentLevel() : null;
-  const k = sp.kind === 'future' ? 'future-' + lv.prop : 'jiwoo-' + (sp.face || 'neutral');
+  const k = sp.kind === 'future' ? 'future-' + lv.prop : 'jiwoo-' + comp() + '-' + (sp.face || 'neutral');
   if (el.dataset.k !== k) {
-    el.innerHTML = sp.kind === 'future' ? svgFuture(lv.prop, 'lit') : svgJiwoo(sp.face || 'neutral');
+    el.innerHTML = sp.kind === 'future' ? svgFuture(lv.prop, 'lit') : svgJiwoo(sp.face || 'neutral', comp());
     el.dataset.k = k;
   }
   el.classList.add('on');
@@ -846,7 +929,7 @@ function showChoices(id) {
   box.innerHTML = '';
   const q = document.createElement('p');
   q.className = 'q';
-  q.textContent = '당신이라면?';
+  q.textContent = '평소의 나라면?';
   box.appendChild(q);
   sc.opts.forEach((o, idx) => {
     const b = document.createElement('button');
@@ -864,7 +947,7 @@ function showChoices(id) {
   });
   box.classList.add('on');
   $('next').classList.remove('on');
-  $('srText').textContent = '당신이라면? 네 가지 중에서 하나를 골라 주세요.';
+  $('srText').textContent = '평소의 나라면? 네 가지 중에서 하나를 골라 주세요.';
 }
 
 function run() {
@@ -873,10 +956,12 @@ function run() {
   lastStepAt = Date.now();
   setBg(bgAt(state.i));
   setChip();
+  setTarget();
   if (s.t !== 'msg') $('msg').classList.remove('on');
   if (s.t !== 'month') $('monthcard').classList.remove('on');
   if (s.t !== 'choice') $('choices').classList.remove('on');
-  setSprite(spriteAt(state.i));
+  setQuad(s.quad);
+  setSprite(s.quad ? null : spriteAt(state.i));
   if (s.t === 'narr') { setName(null); typeText(s.text, true); }
   else if (s.t === 'say') { setName(s.who); typeText(s.text, false); }
   else if (s.t === 'msg') { setName(null); showMsg(s); typeText('띠링.', true); }
@@ -932,7 +1017,8 @@ function renderEnding() {
 <h2 class="e-name">${esc(r.level.name)}</h2>
 <div class="lines">${lines.map((l, k) => `<p style="animation-delay:${(base + k * step).toFixed(2)}s">${esc(l)}</p>`).join('')}</div>
 <p class="closing" style="animation-delay:${(base + lines.length * step + 0.4).toFixed(2)}s">${esc(CLOSING)}</p>
-<button class="btn" id="btnRecall" type="button" style="animation-delay:${(base + lines.length * step + 1.2).toFixed(2)}s">회상 보기</button>`;
+<div class="emsg" style="animation-delay:${(base + lines.length * step + 1.4).toFixed(2)}s"><div class="av">지</div><div><div class="from">지우</div><div class="body">새해 복 많이 받아. 올해도 솔직한 너로 지내 줘.</div></div></div>
+<button class="btn" id="btnRecall" type="button" style="animation-delay:${(base + lines.length * step + 2.2).toFixed(2)}s">회상 보기</button>`;
   $('btnRecall').addEventListener('click', () => { renderResult(); showScreen('result'); $('result').scrollTop = 0; });
 }
 function renderResult() {
@@ -948,7 +1034,7 @@ function renderResult() {
 <p class="r-mean">${esc(r.level.mean)}</p>
 <p class="r-total">32점 중 <b>${r.total}점</b></p>
 <div class="lineup">${svgLineup(r.lv)}</div>
-<p class="capnote">처음에 고를 수 없었던 네 사람은 모두 1년 뒤의 당신이었어요. 점수가 높을수록 오른쪽 사람에 가까워집니다.</p>
+<p class="capnote">네 사람은 모두 1년 뒤의 당신이었어요. 점수가 높을수록 오른쪽 사람에 가까워집니다.</p>
 <p class="save-hint">강의 중에 이 화면을 다시 봅니다. 지금 캡처해 두세요.</p>
 <h2 class="sec">영역별로 보면</h2>
 ${dims}
@@ -965,7 +1051,7 @@ function confirmRestart() {
 }
 
 function startPlay() {
-  state = fresh();
+  state = fresh(state.g || 'm');
   save();
   curBg = null;
   $('sprite').dataset.k = '';
@@ -982,8 +1068,8 @@ function resumePlay(saved) {
 
 function boot() {
   buildRing();
-  buildPick();
-  $('btnStart').addEventListener('click', () => showScreen('pick'));
+  buildWho();
+  $('btnStart').addEventListener('click', () => showScreen('who'));
   $('play').addEventListener('click', (e) => {
     if (e.target.closest && e.target.closest('#choices')) return;
     advance();
